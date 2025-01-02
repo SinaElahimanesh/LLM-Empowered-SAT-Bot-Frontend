@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const Login = () => {
+const Login = ({ onLogin }) => {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [message, setMessage] = useState('');
 
@@ -10,25 +10,40 @@ const Login = () => {
     };
 
 
+    // const handleSubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     try {
+    //         const response = await axios.post('http://localhost:8000/api/login/', formData);
+    //         localStorage.setItem('access', response.data.access);
+    //         localStorage.setItem('refresh', response.data.refresh);
+    //         setMessage('Login successful!');
+    //     } catch (error) {
+    //         setMessage('Error: Invalid credentials.');
+    //     }
+    // };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:8000/api/login/', formData);
-            localStorage.setItem('access', response.data.access);
-            localStorage.setItem('refresh', response.data.refresh);
-            setMessage('Login successful!');
+            const response = await axios.post("http://localhost:8000/api/login/", formData);
+            localStorage.setItem("access", response.data.access);
+            localStorage.setItem("refresh", response.data.refresh);
+            setMessage("Login successful!");
+            if (onLogin) onLogin(); // Notify parent component
         } catch (error) {
-            setMessage('Error: Invalid credentials.');
+            // setMessage("Error: Invalid credentials.");
+            console.log("error: ", error);
+            setMessage(error.response.data.username || error.response.data.email || error.response.data.error || 'Error: Invalid credentials. ');
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex items-center text-right justify-center min-h-screen bg-gray-100">
             <form onSubmit={handleSubmit} className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Login</h2>
+                <h2 className="text-2xl font-bold mb-4">ورود</h2>
                 {message && <p className="text-red-500">{message}</p>}
                 <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Username</label>
+                    <label className="block text-gray-700 mb-2">نام‌کاربری</label>
                     <input
                         type="text"
                         name="username"
@@ -39,7 +54,7 @@ const Login = () => {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Password</label>
+                    <label className="block text-gray-700 mb-2">رمزعبور</label>
                     <input
                         type="password"
                         name="password"
@@ -53,9 +68,20 @@ const Login = () => {
                     type="submit"
                     className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
                 >
-                    Login
+                    ورود
                 </button>
+                <div className="text-center mt-3" dir='rtl'>
+                    حسابی ندارید؟
+                    <a
+                        className="text-blue-500 hover:text-blue-700 transition duration-200 mr-1"
+                        href="/register"
+                    >
+                        ثبت نام کنید!
+                    </a>
+                </div>
+
             </form>
+
         </div>
     );
 };
