@@ -12,8 +12,15 @@ const Chatbot = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [recommendations, setRecommendations] = useState(["سلام", "به کمک نیاز دارم"]);
     const [dots, setDots] = useState(".");
+    const [chatState, setChatState] = useState(null);
 
     const chatAreaRef = useRef(null);
+
+    const restartChat = () => {
+        setRecommendations(["سلام", "به کمک نیاز دارم"])
+        setChatState(null);
+        setMessages({ text: "سلام! چطور میتونم کمکتون کنم؟", sender: "bot" })
+    }
 
     // Function to animate waiting dots
     useEffect(() => {
@@ -48,10 +55,11 @@ const Chatbot = () => {
                 }
             );
 
-            console.log("msg res: ", response.data);
+            console.log("msg res: ", response);
 
             // Add bot's message and recommendations to the chat
             const botMessage = { text: response.data.response, sender: "bot" };
+            setChatState(response.data.state);
             setMessages((prevMessages) => [...prevMessages, botMessage]);
             setRecommendations(response.data.recommendations || []);
         } catch (error) {
@@ -59,7 +67,7 @@ const Chatbot = () => {
             const errorMessage = { text: "Error: Unable to fetch response.", sender: "bot" };
             setMessages((prevMessages) => [...prevMessages, errorMessage]);
         } finally {
-            setIsTyping(false); // Hide typing animation
+            setIsTyping(false);
         }
     };
 
@@ -146,7 +154,7 @@ const Chatbot = () => {
 
                 {/* Input Area */}
                 <div className="flex items-center px-4 py-3 bg-white shadow-lg">
-                    <input
+                    {chatState !== "END" ? <><input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -155,12 +163,20 @@ const Chatbot = () => {
                         dir="rtl"
                         placeholder="پیام خود را وارد کنید..."
                     />
-                    <button
-                        onClick={() => sendMessage()}
-                        className="ml-2 bg-blue-500 text-white p-3 rounded-full shadow-md hover:bg-blue-600 transition duration-200"
-                    >
-                        <FiSend size={20} />
-                    </button>
+                        <button
+                            onClick={() => sendMessage()}
+                            className="ml-2 bg-blue-500 text-white p-3 rounded-full shadow-md hover:bg-blue-600 transition duration-200"
+                        >
+                            <FiSend size={20} />
+                        </button></> : <><button
+                            className="bg-purple-500 text-white mx-auto px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition duration-200"
+                            onClick={() => restartChat()}
+                        >
+                            شروع مجدد
+                        </button></>
+
+                    }
+
                 </div>
             </div>
         </div>
