@@ -19,7 +19,7 @@ const Chatbot = () => {
     const restartChat = () => {
         setRecommendations(["سلام", "به کمک نیاز دارم"])
         setChatState(null);
-        setMessages({ text: "سلام! چطور میتونم کمکتون کنم؟", sender: "bot" })
+        setMessages([{ text: "سلام! چطور میتونم کمکتون کنم؟", sender: "bot" }])
     }
 
     // Function to animate waiting dots
@@ -133,7 +133,7 @@ const Chatbot = () => {
                 </div>
 
                 {/* Action Buttons or Animated Waiting */}
-                <div
+                {chatState !== "END" && <div
                     dir="rtl"
                     className="flex items-center text-sm justify-center px-4 py-3 bg-gradient-to-r from-grey-900 to-indigo-500 text-grey100"
                 >
@@ -150,7 +150,7 @@ const Chatbot = () => {
                     ) : (
                         <p className="text-grey100"></p>
                     )}
-                </div>
+                </div>}
 
                 {/* Input Area */}
                 <div className="flex items-center px-4 py-3 bg-white shadow-lg">
@@ -169,7 +169,7 @@ const Chatbot = () => {
                         >
                             <FiSend size={20} />
                         </button></> : <><button
-                            className="bg-purple-500 text-white mx-auto px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition duration-200"
+                            className="bg-purple-500 text-white mx-auto px-4 py-2 rounded-full shadow-md hover:bg-purple-400 transition duration-200"
                             onClick={() => restartChat()}
                         >
                             شروع مجدد
