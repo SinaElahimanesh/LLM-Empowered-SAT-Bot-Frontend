@@ -3,6 +3,8 @@ import { FiSend } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
 import { TbMessageChatbotFilled } from "react-icons/tb";
 import axios from "axios";
+import EXIMG from "./assets/test.jpeg";
+import ExerciseMessage from "./ExerciseMessage";
 
 const Chatbot = () => {
     const [messages, setMessages] = useState([
@@ -33,18 +35,54 @@ const Chatbot = () => {
         }
     }, [recommendations, isTyping]);
 
+    // const sendMessage = async (text = input) => {
+    //     if (!text.trim()) return;
+
+    //     // Add the user's message to the chat
+    //     const userMessage = { text, sender: "user" };
+    //     setMessages((prevMessages) => [...prevMessages, userMessage]);
+    //     setInput("");
+    //     setRecommendations([]);
+    //     setIsTyping(true); // Show typing animation
+
+    //     try {
+    //         // Send the message to the backend
+    //         const response = await axios.post(
+    //             "http://localhost:8000/api/message/",
+    //             { text },
+    //             {
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem("access")}`
+    //                 }
+    //             }
+    //         );
+
+    //         console.log("msg res: ", response);
+
+    //         // Add bot's message and recommendations to the chat
+    //         const botMessage = { text: response.data.response, sender: "bot" };
+    //         setChatState(response.data.state);
+    //         setMessages((prevMessages) => [...prevMessages, botMessage]);
+    //         setRecommendations(response.data.recommendations || []);
+    //     } catch (error) {
+    //         console.error("Error sending message:", error);
+    //         const errorMessage = { text: "Error: Unable to fetch response.", sender: "bot" };
+    //         setMessages((prevMessages) => [...prevMessages, errorMessage]);
+    //     } finally {
+    //         setIsTyping(false);
+    //     }
+    // };
+
     const sendMessage = async (text = input) => {
         if (!text.trim()) return;
 
-        // Add the user's message to the chat
         const userMessage = { text, sender: "user" };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setInput("");
         setRecommendations([]);
-        setIsTyping(true); // Show typing animation
+        setIsTyping(true);
 
         try {
-            // Send the message to the backend
             const response = await axios.post(
                 "http://localhost:8000/api/message/",
                 { text },
@@ -57,9 +95,13 @@ const Chatbot = () => {
 
             console.log("msg res: ", response);
 
-            // Add bot's message and recommendations to the chat
-            const botMessage = { text: response.data.response, sender: "bot" };
-            setChatState(response.data.state);
+            // Store state inside the message itself
+            const botMessage = {
+                text: response.data.response,
+                sender: "bot",
+                state: response.data.state // Store the state inside the message
+            };
+
             setMessages((prevMessages) => [...prevMessages, botMessage]);
             setRecommendations(response.data.recommendations || []);
         } catch (error) {
@@ -70,6 +112,7 @@ const Chatbot = () => {
             setIsTyping(false);
         }
     };
+
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
@@ -114,10 +157,15 @@ const Chatbot = () => {
                                     : "bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl"
                                     }`}
                             >
-                                {msg.text}
+                                {msg.state === "INVITE_TO_ATTEMPT_EXC" ? (
+                                    <ExerciseMessage msg={msg.text} img={EXIMG} />
+                                ) : (
+                                    msg.text
+                                )}
                             </div>
                         </div>
                     ))}
+
 
                     {/* Typing Indicator */}
                     {isTyping && (
@@ -154,26 +202,28 @@ const Chatbot = () => {
 
                 {/* Input Area */}
                 <div className="flex items-center px-4 py-3 bg-white shadow-lg">
-                    {chatState !== "END" ? <><input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        className="flex-grow px-4 py-2 border border-gray-300 rounded-full text-blue-700 placeholder-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                        dir="rtl"
-                        placeholder="پیام خود را وارد کنید..."
-                    />
+                    {chatState !== "END" ? <>
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="flex-grow px-4 py-2 border border-gray-300 rounded-full text-blue-700 placeholder-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                            dir="rtl"
+                            placeholder="پیام خود را وارد کنید..."
+                        />
                         <button
                             onClick={() => sendMessage()}
                             className="ml-2 bg-blue-500 text-white p-3 rounded-full shadow-md hover:bg-blue-600 transition duration-200"
                         >
                             <FiSend size={20} />
-                        </button></> : <><button
-                            className="bg-purple-500 text-white mx-auto px-4 py-2 rounded-full shadow-md hover:bg-purple-400 transition duration-200"
-                            onClick={() => restartChat()}
-                        >
-                            شروع مجدد
-                        </button></>
+                        </button>
+                    </> : <><button
+                        className="bg-purple-500 text-white mx-auto px-4 py-2 rounded-full shadow-md hover:bg-purple-400 transition duration-200"
+                        onClick={() => restartChat()}
+                    >
+                        شروع مجدد
+                    </button></>
 
                     }
 
