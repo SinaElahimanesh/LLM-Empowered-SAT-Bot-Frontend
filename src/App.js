@@ -16,6 +16,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Register from "./Auth/Register";
 import Login from "./Auth/Login";
 import Chatbot from "./Chatbot";
+import AudioRecorder from "./AudioRecorder";
 
 // Fake authentication function to check token (replace with actual logic)
 const isAuthenticated = () => {
@@ -88,15 +89,14 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Redirect if user is authenticated */}
-          {isAuthenticated ? (
+
+          {true ? (
             <>
               <Route path="/chatbot" element={<Chatbot />} />
               <Route path="*" element={<Navigate to="/chatbot" />} />
             </>
           ) : (
             <>
-              {/* Public Routes */}
               <Route
                 path="/register"
                 element={<Register />}
@@ -106,6 +106,7 @@ function App() {
                 element={<Login onLogin={() => setIsAuthenticated(true)} />}
               />
               <Route path="*" element={<Navigate to="/login" />} />
+              <Route path="audio" element={<AudioRecorder />} />
             </>
           )}
         </Routes>
