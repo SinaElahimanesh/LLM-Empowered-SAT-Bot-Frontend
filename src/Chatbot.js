@@ -189,7 +189,7 @@ const Chatbot = () => {
                         msg.sender === "bot"
                             ? splitBotMessage(msg.text).map((splitMsg, subIndex) => (
                                 <div key={`${index}-${subIndex}`} className="flex justify-start">
-                                    <div className="max-w-xs px-4 py-2 bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl">
+                                    <div className="max-w-sm px-4 py-2 bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl">
                                         {splitMsg}
                                     </div>
                                 </div>
