@@ -23,11 +23,14 @@ const Chatbot = () => {
     const lastMessageRef = useRef(null);
     const [queue, setQueue] = useState([]); // Queue to hold split messages
 
+    const messagesEndRef = useRef(null);
+
     useEffect(() => {
-        if (lastMessageRef.current) {
-            lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages]);
+    }, [messages]); // Scroll whenever messages update
+    
 
     const chatAreaRef = useRef(null);
 
@@ -199,6 +202,7 @@ const Chatbot = () => {
                                 </div>
                             )
                     )}
+                    <div ref={messagesEndRef} /> 
                 </div>
 
                 <div className="flex items-center px-4 py-3 bg-white shadow-lg">
