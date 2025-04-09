@@ -31,10 +31,10 @@ const PrivateRoute = ({ children }) => {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem("access");
-  //   setIsAuthenticated(!!token);
-  // }, []);
+  useEffect(() => {
+    const token = localStorage.getItem("access");
+    setIsAuthenticated(!!token);
+  }, []);
 
   useEffect(() => {
     const handleBeforeUnload = async () => {
@@ -90,7 +90,7 @@ function App() {
       <div className="App">
         <Routes>
 
-          {true ? (
+          {isAuthenticated ? (
             <>
               <Route path="/chatbot" element={<Chatbot />} />
               <Route path="*" element={<Navigate to="/chatbot" />} />
@@ -103,7 +103,7 @@ function App() {
               />
               <Route
                 path="/login"
-                element={<Login onLogin={() => setIsAuthenticated(true)} />}
+                element={<Login onLogin={() => setIsAuthenticated(isAuthenticated)} />}
               />
               <Route path="*" element={<Navigate to="/login" />} />
               <Route path="audio" element={<AudioRecorder />} />
