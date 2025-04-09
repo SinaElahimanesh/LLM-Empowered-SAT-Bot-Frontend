@@ -30,43 +30,43 @@ const Chatbot = () => {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages]); // Scroll whenever messages update
-    
+
 
     const chatAreaRef = useRef(null);
 
     const splitBotMessage = (text) => {
         const words = text.split(" ");
         if (words.length <= 20) return [text]; // No need to split if short
-    
+
         let messages = [];
         let tempMessage = [];
-    
+
         for (let i = 0; i < words.length; i++) {
             tempMessage.push(words[i]);
-    
+
             // Check if word ends in punctuation and we have at least 20 words
             if (tempMessage.length >= 20 && /[.!?]$/.test(words[i])) {
                 messages.push(tempMessage.join(" "));
                 tempMessage = [];
             }
         }
-    
+
         // Push remaining words if any
         if (tempMessage.length) messages.push(tempMessage.join(" "));
         return messages;
     };
-    
+
 
     useEffect(() => {
         if (queue.length === 0) return;
-    
+
         const interval = setInterval(() => {
             setMessages((prev) => [...prev, queue[0]]);
             setQueue((prevQueue) => prevQueue.slice(1));
         }, 2000); // Show each message with 1-second delay
-    
+
         return () => clearInterval(interval);
-    }, [queue]);    
+    }, [queue]);
 
     const restartChat = () => {
         setRecommendations(["سلام", "به کمک نیاز دارم"]);
@@ -87,13 +87,13 @@ const Chatbot = () => {
     const sendMessage = async () => {
         const text = input.trim();
         if (!text) return;
-    
+
         const userMessage = { text, sender: "user" };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setInput("");
         setRecommendations([]);
         setIsTyping(true);
-    
+
         try {
             const response = await axios.post(
                 "http://localhost:8000/api/message/",
@@ -102,15 +102,15 @@ const Chatbot = () => {
                     headers: { Authorization: `Bearer ${localStorage.getItem("access")}` }
                 }
             );
-    
+
             const botResponses = splitBotMessage(response.data.response).map((msg) => ({
                 text: msg,
                 sender: "bot"
             }));
 
             console.log("bot", botResponses)
-    
-            setQueue(botResponses); // Add split messages to queue for sequential display
+
+            setQueue(botResponses);
             setRecommendations(response.data.recommendations || []);
         } catch (error) {
             console.error("Error sending message:", error);
@@ -118,13 +118,41 @@ const Chatbot = () => {
         } finally {
             setIsTyping(false);
         }
-    };    
+    };
+
+    // const startRecording = async () => {
+    //     setRecording(true);
+    //     audioChunksRef.current = [];
+    //     try {
+    //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    //         const mediaRecorder = new MediaRecorder(stream);
+    //         mediaRecorderRef.current = mediaRecorder;
+
+    //         mediaRecorder.ondataavailable = (event) => {
+    //             if (event.data.size > 0) {
+    //                 audioChunksRef.current.push(event.data);
+    //             }
+    //         };
+
+    //         mediaRecorder.onstop = async () => {
+    //             setRecording(false);
+    //             const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+    //             sendAudioMessage(audioBlob);
+    //         };
+
+    //         mediaRecorder.start();
+    //     } catch (error) {
+    //         console.error("Error accessing microphone:", error);
+    //     }
+    // };
 
     const startRecording = async () => {
-        setRecording(true);
-        audioChunksRef.current = [];
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            setRecording(true);
+            audioChunksRef.current = [];
+
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
 
@@ -142,9 +170,12 @@ const Chatbot = () => {
 
             mediaRecorder.start();
         } catch (error) {
-            console.error("Error accessing microphone:", error);
+            console.error("Microphone access error:", error);
+            alert("نمیتوان به میکروفن دسترسی پیدا کرد. لطفاً تنظیمات مرورگر را بررسی کنید.");
+            setRecording(false);
         }
     };
+
 
     const stopRecording = () => {
         if (mediaRecorderRef.current) {
@@ -152,12 +183,31 @@ const Chatbot = () => {
         }
     };
 
+    // const sendAudioMessage = async (audioBlob) => {
+    //     const formData = new FormData();
+    //     formData.append("audio", audioBlob, "voice_message.wav");
+
+    //     try {
+    //         const response = await axios.post("http://localhost:8000/api/audio-message/", formData, {
+    //             headers: {
+    //                 Authorization: `Bearer ${localStorage.getItem("access")}`,
+    //                 "Content-Type": "multipart/form-data"
+    //             }
+    //         });
+
+    //         const botMessage = { text: response.data.response, sender: "bot" };
+    //         setMessages((prevMessages) => [...prevMessages, botMessage]);
+    //     } catch (error) {
+    //         console.error("Error sending audio message:", error);
+    //     }
+    // };
+
     const sendAudioMessage = async (audioBlob) => {
         const formData = new FormData();
         formData.append("audio", audioBlob, "voice_message.wav");
 
         try {
-            const response = await axios.post("http://localhost:8000/api/audio-message/", formData, {
+            const response = await axios.post("http://localhost:8000/api/send-audio/", formData, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("access")}`,
                     "Content-Type": "multipart/form-data"
@@ -167,9 +217,11 @@ const Chatbot = () => {
             const botMessage = { text: response.data.response, sender: "bot" };
             setMessages((prevMessages) => [...prevMessages, botMessage]);
         } catch (error) {
-            console.error("Error sending audio message:", error);
+            console.error("Error sending audio message:", error.response?.data || error.message);
+            setMessages((prev) => [...prev, { text: "خطا در ارسال پیام صوتی.", sender: "bot" }]);
         }
     };
+
 
     return (
         <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
@@ -185,7 +237,7 @@ const Chatbot = () => {
                 </div>
 
                 <div ref={chatAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
-                    {messages.flatMap((msg, index) => 
+                    {messages.flatMap((msg, index) =>
                         msg.sender === "bot"
                             ? splitBotMessage(msg.text).map((splitMsg, subIndex) => (
                                 <div key={`${index}-${subIndex}`} className="flex justify-start">
@@ -202,7 +254,7 @@ const Chatbot = () => {
                                 </div>
                             )
                     )}
-                    <div ref={messagesEndRef} /> 
+                    <div ref={messagesEndRef} />
                 </div>
 
                 <div className="flex items-center px-4 py-3 bg-white shadow-lg">
