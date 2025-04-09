@@ -13,18 +13,6 @@ const Login = ({ onLogin }) => {
 
     const navigate = useNavigate();
 
-    // const handleSubmit = async (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     try {
-    //         const response = await axios.post('http://localhost:8000/api/login/', formData);
-    //         localStorage.setItem('access', response.data.access);
-    //         localStorage.setItem('refresh', response.data.refresh);
-    //         setMessage('Login successful!');
-    //     } catch (error) {
-    //         setMessage('Error: Invalid credentials.');
-    //     }
-    // };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -34,12 +22,11 @@ const Login = ({ onLogin }) => {
             setMessage("Login successful!");
 
             setTimeout(() => {
-                navigate('/chatbot'); // Redirect to the login page
+                navigate('/chatbot');
             }, 1500);
 
-            if (onLogin) onLogin(); // Notify parent component
+            if (onLogin) onLogin();
         } catch (error) {
-            // setMessage("Error: Invalid credentials.");
             console.log("error: ", error);
             setMessage(error.response.data.username || error.response.data.email || error.response.data.error || 'Error: Invalid credentials. ');
         }

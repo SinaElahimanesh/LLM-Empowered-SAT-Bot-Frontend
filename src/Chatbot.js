@@ -21,7 +21,7 @@ const Chatbot = () => {
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
     const lastMessageRef = useRef(null);
-    const [queue, setQueue] = useState([]); // Queue to hold split messages
+    const [queue, setQueue] = useState([]);
 
     const messagesEndRef = useRef(null);
 
@@ -29,7 +29,8 @@ const Chatbot = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages]); // Scroll whenever messages update
+    }, [messages]);
+
 
 
     const chatAreaRef = useRef(null);
@@ -44,17 +45,26 @@ const Chatbot = () => {
         for (let i = 0; i < words.length; i++) {
             tempMessage.push(words[i]);
 
-            // Check if word ends in punctuation and we have at least 20 words
             if (tempMessage.length >= 20 && /[.!?]$/.test(words[i])) {
                 messages.push(tempMessage.join(" "));
                 tempMessage = [];
             }
         }
 
-        // Push remaining words if any
         if (tempMessage.length) messages.push(tempMessage.join(" "));
         return messages;
     };
+
+    useEffect(() => {
+        localStorage.setItem("chat_recommendations", JSON.stringify(recommendations));
+    }, [recommendations]);
+
+    useEffect(() => {
+        const savedRecs = localStorage.getItem("chat_recommendations");
+        if (savedRecs) {
+            setRecommendations(JSON.parse(savedRecs));
+        }
+    }, []);
 
 
     useEffect(() => {
@@ -63,7 +73,7 @@ const Chatbot = () => {
         const interval = setInterval(() => {
             setMessages((prev) => [...prev, queue[0]]);
             setQueue((prevQueue) => prevQueue.slice(1));
-        }, 2000); // Show each message with 1-second delay
+        }, 0); // Show each message with 1-second delay
 
         return () => clearInterval(interval);
     }, [queue]);
@@ -71,8 +81,11 @@ const Chatbot = () => {
     const restartChat = () => {
         setRecommendations(["سلام", "به کمک نیاز دارم"]);
         setChatState(null);
-        setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
+        const welcomeMessage = [{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }];
+        setMessages(welcomeMessage);
+        localStorage.setItem("chat_messages", JSON.stringify(welcomeMessage));
     };
+
 
     useEffect(() => {
         if (recommendations.length === 0 && isTyping) {
@@ -225,7 +238,7 @@ const Chatbot = () => {
 
     return (
         <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
-            <div className="flex flex-col w-full max-w-3xl h-full bg-white shadow-2xl rounded-lg overflow-hidden">
+            <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
                     <button className="hover:text-red-400 transition duration-200">
                         <AiOutlineClose size={24} />
@@ -255,9 +268,24 @@ const Chatbot = () => {
                             )
                     )}
                     <div ref={messagesEndRef} />
+
+                    {isTyping && (
+                        <div className="flex bg-grey-600 justify-start">
+                            <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl">
+                                <div className="flex space-x-1">
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
 
-                <div className="flex items-center px-4 py-3 bg-white shadow-lg">
+
+
+                <div className="flex items-center px-4 py-3 bg- shadow-lg">
                     <input
                         type="text"
                         value={input}
