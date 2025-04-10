@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const Login = ({ onLogin }) => {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [message, setMessage] = useState('');
+    const [error, setError] = useState(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,29 +15,46 @@ const Login = ({ onLogin }) => {
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
+        setError(null);
+        setMessage(null);
         e.preventDefault();
         try {
             const response = await axios.post("http://localhost:8000/api/login/", formData);
-            localStorage.setItem("access", response.data.access);
-            localStorage.setItem("refresh", response.data.refresh);
             setMessage("Login successful!");
 
-            setTimeout(() => {
-                navigate('/chatbot');
-            }, 1500);
 
+
+            localStorage.setItem("access", response.data.access);
+            localStorage.setItem("refresh", response.data.refresh);
             if (onLogin) onLogin();
         } catch (error) {
             console.log("error: ", error);
-            setMessage(error.response.data.username || error.response.data.email || error.response.data.error || 'Error: Invalid credentials. ');
+            setError(error.response.data.username || error.response.data.email || error.response.data.error || 'Error: Invalid credentials. ');
+        }
+    };
+
+    const handleLogin = async (e) => {
+        setError(null);
+        setMessage(null);
+        e.preventDefault();
+        try {
+            const response = await axios.post("http://localhost:8000/api/login/", formData);
+
+            localStorage.setItem("access", response.data.access);
+            localStorage.setItem("refresh", response.data.refresh);
+            onLogin();
+            navigate("/chatbot");
+        } catch (err) {
+            console.error(err);
+            setError("نام کاربری یا رمز عبور اشتباه است.");
         }
     };
 
     return (
         <div className="flex items-center text-right justify-center min-h-screen bg-gray-100">
-            <form onSubmit={handleSubmit} className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+            <form onSubmit={handleLogin} className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
                 <h2 className="text-2xl font-bold mb-4">ورود</h2>
-                {message && <p className="text-red-500">{message}</p>}
+                {message && <p className="text-green-500">{message}</p>}
                 <div className="mb-4">
                     <label className="block text-gray-700 mb-2">نام‌کاربری</label>
                     <input
@@ -59,6 +77,7 @@ const Login = ({ onLogin }) => {
                         required
                     />
                 </div>
+                {error && <p className='text-red-500'>{error}</p>}
                 <button
                     type="submit"
                     className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"

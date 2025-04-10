@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { FiSend, FiMic } from "react-icons/fi";
-import { AiOutlineClose } from "react-icons/ai";
+import { CiLogout } from "react-icons/ci";
 import { TbMessageChatbotFilled } from "react-icons/tb";
 import axios from "axios";
 import EXIMG from "./assets/test.jpeg";
@@ -36,8 +36,9 @@ const Chatbot = () => {
     const chatAreaRef = useRef(null);
 
     const splitBotMessage = (text) => {
-        const words = text.split(" ");
-        if (words.length <= 20) return [text]; // No need to split if short
+        if (!text) return
+        const words = text?.split(" ");
+        if (words?.length <= 20) return [text];
 
         let messages = [];
         let tempMessage = [];
@@ -73,7 +74,7 @@ const Chatbot = () => {
         const interval = setInterval(() => {
             setMessages((prev) => [...prev, queue[0]]);
             setQueue((prevQueue) => prevQueue.slice(1));
-        }, 0); // Show each message with 1-second delay
+        }, 0);
 
         return () => clearInterval(interval);
     }, [queue]);
@@ -133,31 +134,6 @@ const Chatbot = () => {
         }
     };
 
-    // const startRecording = async () => {
-    //     setRecording(true);
-    //     audioChunksRef.current = [];
-    //     try {
-    //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    //         const mediaRecorder = new MediaRecorder(stream);
-    //         mediaRecorderRef.current = mediaRecorder;
-
-    //         mediaRecorder.ondataavailable = (event) => {
-    //             if (event.data.size > 0) {
-    //                 audioChunksRef.current.push(event.data);
-    //             }
-    //         };
-
-    //         mediaRecorder.onstop = async () => {
-    //             setRecording(false);
-    //             const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
-    //             sendAudioMessage(audioBlob);
-    //         };
-
-    //         mediaRecorder.start();
-    //     } catch (error) {
-    //         console.error("Error accessing microphone:", error);
-    //     }
-    // };
 
     const startRecording = async () => {
         try {
@@ -196,24 +172,6 @@ const Chatbot = () => {
         }
     };
 
-    // const sendAudioMessage = async (audioBlob) => {
-    //     const formData = new FormData();
-    //     formData.append("audio", audioBlob, "voice_message.wav");
-
-    //     try {
-    //         const response = await axios.post("http://localhost:8000/api/audio-message/", formData, {
-    //             headers: {
-    //                 Authorization: `Bearer ${localStorage.getItem("access")}`,
-    //                 "Content-Type": "multipart/form-data"
-    //             }
-    //         });
-
-    //         const botMessage = { text: response.data.response, sender: "bot" };
-    //         setMessages((prevMessages) => [...prevMessages, botMessage]);
-    //     } catch (error) {
-    //         console.error("Error sending audio message:", error);
-    //     }
-    // };
 
     const sendAudioMessage = async (audioBlob) => {
         const formData = new FormData();
@@ -227,21 +185,31 @@ const Chatbot = () => {
                 }
             });
 
-            const botMessage = { text: response.data.response, sender: "bot" };
-            setMessages((prevMessages) => [...prevMessages, botMessage]);
+            console.log("RESPONSE: ", response.data.transcription)
+
+            const botMessage = { text: response.data.transcription, sender: "user" };
+            // setMessages((prevMessages) => [...prevMessages, botMessage]);
+            setInput(botMessage.text);
+            sendMessage();
+
         } catch (error) {
             console.error("Error sending audio message:", error.response?.data || error.message);
-            setMessages((prev) => [...prev, { text: "خطا در ارسال پیام صوتی.", sender: "bot" }]);
+            setMessages((prev) => [...prev, { text: "خطا در ارسال پیام صوتی.", sender: "user" }]);
         }
     };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.reload();
+    }
 
 
     return (
         <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
             <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
-                    <button className="hover:text-red-400 transition duration-200">
-                        <AiOutlineClose size={24} />
+                    <button className="hover:text-red-400 transition duration-200" onClick={handleLogout}>
+                        <CiLogout size={24} />
                     </button>
                     <h2 className="text-xl font-bold">بات دلبستگی به خود</h2>
                     <div className="rounded-full bg-indigo-800 p-2 shadow-md">
@@ -283,7 +251,14 @@ const Chatbot = () => {
 
                 </div>
 
-
+                {recording && (
+                    <div className="flex justify-start">
+                        <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl flex items-center space-x-2">
+                            <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                            <span className="text-sm text-red-600">در حال ضبط صدا...</span>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex items-center px-4 py-3 bg- shadow-lg">
                     <input
@@ -305,6 +280,7 @@ const Chatbot = () => {
                         <FiSend size={20} />
                     </button>
                 </div>
+
             </div>
         </div>
     );

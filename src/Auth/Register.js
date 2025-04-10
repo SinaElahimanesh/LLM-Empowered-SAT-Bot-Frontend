@@ -3,9 +3,10 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 
-const Register = () => {
+const Register = ({ onRegister }) => {
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
     const [message, setMessage] = useState('');
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,19 +16,21 @@ const Register = () => {
 
 
     const handleSubmit = async (e: React.FormEvent) => {
+        setError(null);
+        setMessage(null);
         e.preventDefault();
         try {
             const response = await axios.post("http://localhost:8000/api/register/", formData);
             setMessage("ثبت نام انجام شد. درحال انتقال به صفحه ورود... sr   ");
             // Automatically log in the user after registration
             console.log("res: ", response);
-            // if (onRegister) onRegister();          
+            onRegister();
             setTimeout(() => {
                 navigate('/login'); // Redirect to the login page
             }, 1500);
         } catch (error) {
             console.log("reg err: ", error);
-            setMessage(error.response.data.username || error.response.data.email || error.response.data.error || 'Error: Registration failed. ');
+            setError(error.response.data.username || error.response.data.email || error.response.data.error || 'Error: Registration failed. ');
         }
     };
 
@@ -35,7 +38,7 @@ const Register = () => {
         <div className="flex items-center text-right justify-center min-h-screen bg-gray-100">
             <form onSubmit={handleSubmit} className="w-full  max-w-md bg-white shadow-lg rounded-lg p-6">
                 <h2 className="text-2xl font-bold mb-4">ثبت‌ نام</h2>
-                {message && <p className="text-red-500">{message}</p>}
+                {message && <p className="text-green-500">{message}</p>}
                 <div className="mb-4">
                     <label className="block text-gray-700 mb-2">نام‌کاربری</label>
                     <input
@@ -69,6 +72,7 @@ const Register = () => {
                         required
                     />
                 </div>
+                {error && <p className='text-red-500'>{error}</p>}
                 <button
                     type="submit"
                     className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
