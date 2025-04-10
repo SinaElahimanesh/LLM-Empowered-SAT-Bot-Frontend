@@ -43,6 +43,7 @@ const Login = ({ onLogin }) => {
             localStorage.setItem("access", response.data.access);
             localStorage.setItem("refresh", response.data.refresh);
             onLogin();
+            window.location.reload();
             navigate("/chatbot");
         } catch (err) {
             console.error(err);
