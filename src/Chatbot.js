@@ -236,14 +236,14 @@ const Chatbot = () => {
                     {messages.flatMap((msg, index) =>
                         msg.sender === "bot"
                             ? splitBotMessage(msg.text).map((splitMsg, subIndex) => (
-                                <div key={`${index}-${subIndex}`} className="flex justify-start">
+                                <div dir="rtl" key={`${index}-${subIndex}`} className="flex justify-end">
                                     <div className="max-w-sm px-4 py-2 bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl">
                                         {splitMsg}
                                     </div>
                                 </div>
                             ))
                             : (
-                                <div key={index} className="flex justify-end">
+                                <div dir="rtl" key={index} className="flex justify-start">
                                     <div className="max-w-xs px-4 py-2 bg-blue-500 text-white rounded-l-2xl rounded-tr-2xl">
                                         {msg.text}
                                     </div>
@@ -280,9 +280,11 @@ const Chatbot = () => {
                                 sendMessage();
                             }
                         }}
+
+                        dir="rtl"
                     />
                     {recording && (
-                        <div className="flex justify-start">
+                        <div dir="rtl" className="flex justify-start">
                             <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl flex items-center space-x-2">
                                 <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
                                 <span className="text-sm text-red-600">در حال ضبط صدا...</span>
