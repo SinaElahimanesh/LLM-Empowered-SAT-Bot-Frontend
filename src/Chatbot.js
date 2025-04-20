@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FiSend, FiMic, FiStopCircle } from "react-icons/fi";
 import { CiLogout } from "react-icons/ci";
-import { TbMessageChatbotFilled } from "react-icons/tb";
+import { TbMessageChatbot, TbMessageChatbotFilled } from "react-icons/tb";
 import axios from "axios";
 import { ExcImage } from "./Images";
+import { message, Typography } from "antd";
+import clsx from "clsx";
+import "./App.css";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -24,6 +27,8 @@ const Chatbot = () => {
   const [queue, setQueue] = useState([]);
   const [excImage, setExcImage] = useState(null);
   const [isThisExc, setIsThisExc] = useState(false);
+
+  const [messageApi, contextHolder] = message.useMessage();
 
   const messagesEndRef = useRef(null);
 
@@ -176,9 +181,11 @@ const Chatbot = () => {
       mediaRecorder.start();
     } catch (error) {
       console.error("Microphone access error:", error);
-      alert(
-        "نمیتوان به میکروفن دسترسی پیدا کرد. لطفاً تنظیمات مرورگر را بررسی کنید."
-      );
+      messageApi.open({
+        type: "error",
+        content:
+          "نمیتوان به میکروفن دسترسی پیدا کرد. لطفاً تنظیمات مرورگر را بررسی کنید.",
+      });
       setRecording(false);
     }
   };
@@ -231,87 +238,94 @@ const Chatbot = () => {
   console.log(messages);
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
-      <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
-        <HeaderComponent handleLogout={handleLogout} />
+    <>
+      {contextHolder}
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
+        <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
+          <HeaderComponent handleLogout={handleLogout} />
 
-        <div
-          ref={chatAreaRef}
-          className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50"
-        >
-          {messages.flatMap((msg, index) =>
-            msg.sender === "bot" ? (
-              splitBotMessage(msg.text).map((splitMsg, subIndex) => (
-                <div
-                  dir="rtl"
-                  key={`${index}-${subIndex}`}
-                  className="flex justify-end"
-                >
-                  <div className="max-w-sm px-4 py-2 bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl">
-                    {splitMsg}
+          <div
+            ref={chatAreaRef}
+            className="flex-grow overflow-y-auto p-4 space-y-4 app-background"
+          >
+            {messages.flatMap((msg, index) =>
+              msg.sender === "bot" ? (
+                splitBotMessage(msg.text).map((splitMsg, subIndex) => (
+                  //   <div
+                  //     dir="rtl"
+                  //     key={`${index}-${subIndex}`}
+                  //     className="flex justify-end"
+                  //   >
+                  //     <div className="max-w-sm px-4 py-2 bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl">
+                  //       {splitMsg}
+                  //     </div>
+                  //   </div>
+                  <MessageComponent text={msg.text} sender="bot" />
+                ))
+              ) : (
+                // <div dir="rtl" key={index} className="flex justify-start">
+                //   <div className="max-w-xs px-4 py-2 bg-blue-500 text-white rounded-l-2xl rounded-tr-2xl">
+                //     {msg.text}
+                //   </div>
+                // </div>
+                <MessageComponent text={msg.text} sender="me" />
+              )
+            )}
+            <div ref={messagesEndRef} />
+
+            {isTyping && (
+              <div className="flex bg-grey-600 justify-start">
+                <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div dir="rtl" key={index} className="flex justify-start">
-                <div className="max-w-xs px-4 py-2 bg-blue-500 text-white rounded-l-2xl rounded-tr-2xl">
-                  {msg.text}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center px-4 py-3 bg- shadow-lg">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="flex-grow px-4 py-2 border border-gray-300 rounded-full"
+              placeholder="پیام خود را وارد کنید..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  sendMessage();
+                }
+              }}
+              dir="rtl"
+            />
+            {recording && (
+              <div dir="rtl" className="flex justify-start">
+                <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl flex items-center space-x-2">
+                  <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                  <span className="text-sm text-red-600">
+                    در حال ضبط صدا...
+                  </span>
                 </div>
               </div>
-            )
-          )}
-          <div ref={messagesEndRef} />
-
-          {isTyping && (
-            <div className="flex bg-grey-600 justify-start">
-              <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center px-4 py-3 bg- shadow-lg">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-grow px-4 py-2 border border-gray-300 rounded-full"
-            placeholder="پیام خود را وارد کنید..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                sendMessage();
-              }
-            }}
-            dir="rtl"
-          />
-          {recording && (
-            <div dir="rtl" className="flex justify-start">
-              <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl flex items-center space-x-2">
-                <span className="w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
-                <span className="text-sm text-red-600">در حال ضبط صدا...</span>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={recording ? stopRecording : startRecording}
-            className="ml-2 p-3 rounded-full bg-red-500 text-white"
-          >
-            {recording ? <FiStopCircle size={20} /> : <FiMic size={20} />}
-          </button>
-          <button
-            onClick={sendMessage}
-            className="ml-2 p-3 rounded-full bg-blue-500 text-white"
-          >
-            <FiSend size={20} />
-          </button>
+            )}
+            <button
+              onClick={recording ? stopRecording : startRecording}
+              className="ml-2 p-3 rounded-full bg-red-500 text-white"
+            >
+              {recording ? <FiStopCircle size={20} /> : <FiMic size={20} />}
+            </button>
+            <button
+              onClick={sendMessage}
+              className="ml-2 p-3 rounded-full bg-blue-500 text-white"
+            >
+              <FiSend size={20} />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -327,6 +341,75 @@ const HeaderComponent = ({ handleLogout }) => {
       <h2 className="text-xl font-bold">بات دلبستگی به خود</h2>
       <div className="rounded-full bg-indigo-800 p-2 shadow-md">
         <TbMessageChatbotFilled className="text-2xl" />
+      </div>
+    </div>
+  );
+};
+
+const MessageComponent = ({ text, timestamp, sender, avatarUrl, name }) => {
+  const { Paragraph, Text } = Typography;
+
+  const isMe = sender === "me";
+
+  return (
+    <div
+      className={clsx(
+        "flex w-full items-end space-x-2 my-2",
+        isMe ? "justify-end" : "justify-start"
+      )}
+    >
+      {!isMe && (
+        // <img
+        //   src={avatarUrl}
+        //   alt="avatar"
+        //   className="w-8 h-8 rounded-full object-cover shadow"
+        // />
+        <TbMessageChatbot className="w-8 h-8 mb-8" />
+      )}
+
+      <div
+        className={clsx(
+          "max-w-xs sm:max-w-md",
+          isMe ? "text-right" : "text-left"
+        )}
+        dir="rtl"
+      >
+        {name && !isMe && (
+          <div className="text-xs text-gray-500 font-medium mb-1 ml-1">
+            {name}
+          </div>
+        )}
+        {/* <div
+          className={clsx(
+            "rounded-2xl px-4 py-2 shadow-md text-sm break-words",
+            isMe
+              ? "bg-blue-500 text-white rounded-br-none"
+              : //   : "bg-gray-100 text-gray-800 rounded-bl-none"
+                "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
+          )}
+        >
+          {text}
+        </div> */}
+
+        <Paragraph
+          className={clsx(
+            "rounded-2xl px-4 py-2 shadow-md text-sm break-words paragraph",
+            isMe
+              ? "bg-blue-500 text-white rounded-br-none"
+              : //   : "bg-gray-100 text-gray-800 rounded-bl-none"
+                "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
+          )}
+          copyable={!isMe}
+        >
+          {text}
+        </Paragraph>
+
+        <div className="text-[10px] text-gray-400 mt-1 ml-1" dir="ltr">
+          {`${new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`}
+        </div>
       </div>
     </div>
   );
