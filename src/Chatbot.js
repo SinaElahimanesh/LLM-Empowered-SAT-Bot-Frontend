@@ -75,16 +75,35 @@ const Chatbot = () => {
     }
   }, []);
 
+  // useEffect(() => {
+  //   if (queue.length === 0) return;
+
+  //   const interval = setInterval(() => {
+  //     setMessages((prev) => [...prev, queue[0]]);
+  //     setQueue((prevQueue) => prevQueue.slice(1));
+  //   }, 0);
+
+  //   return () => clearInterval(interval);
+  // }, [queue]);
+
   useEffect(() => {
     if (queue.length === 0) return;
 
     const interval = setInterval(() => {
-      setMessages((prev) => [...prev, queue[0]]);
-      setQueue((prevQueue) => prevQueue.slice(1));
-    }, 0);
+      setQueue((prevQueue) => {
+        if (prevQueue.length === 0) {
+          clearInterval(interval);
+          return prevQueue;
+        }
+
+        const [first, ...rest] = prevQueue;
+        setMessages((prevMessages) => [...prevMessages, first]);
+        return rest;
+      });
+    }, 300); // Adjust delay if you want a pause between messages
 
     return () => clearInterval(interval);
-  }, [queue]);
+  }, [queue.length]);
 
   const restartChat = () => {
     setRecommendations(["سلام", "به کمک نیاز دارم"]);
@@ -135,8 +154,6 @@ const Chatbot = () => {
           sender: "bot",
         })
       );
-
-      console.log("bot", botResponses);
 
       let randomNumber = getRandomInt(8);
 
@@ -212,8 +229,6 @@ const Chatbot = () => {
         }
       );
 
-      console.log("RESPONSE: ", response.data.transcription);
-
       const botMessage = { text: response.data.transcription, sender: "user" };
       // setMessages((prevMessages) => [...prevMessages, botMessage]);
       setInput(botMessage.text);
@@ -235,8 +250,6 @@ const Chatbot = () => {
     window.location.reload();
   };
 
-  console.log(messages);
-
   return (
     <>
       {contextHolder}
@@ -248,29 +261,27 @@ const Chatbot = () => {
             ref={chatAreaRef}
             className="flex-grow overflow-y-auto p-4 space-y-4 app-background"
           >
-            {messages.flatMap((msg, index) =>
+            {/* {messages.flatMap((msg, index) =>
               msg.sender === "bot" ? (
                 splitBotMessage(msg.text).map((splitMsg, subIndex) => (
-                  //   <div
-                  //     dir="rtl"
-                  //     key={`${index}-${subIndex}`}
-                  //     className="flex justify-end"
-                  //   >
-                  //     <div className="max-w-sm px-4 py-2 bg-gray-200 text-blue-700 rounded-r-2xl rounded-tl-2xl">
-                  //       {splitMsg}
-                  //     </div>
-                  //   </div>
-                  <MessageComponent text={msg.text} sender="bot" />
+                  <MessageComponent
+                    key={`${index}-${subIndex}`}
+                    text={splitMsg}
+                    sender="bot"
+                  />
                 ))
               ) : (
-                // <div dir="rtl" key={index} className="flex justify-start">
-                //   <div className="max-w-xs px-4 py-2 bg-blue-500 text-white rounded-l-2xl rounded-tr-2xl">
-                //     {msg.text}
-                //   </div>
-                // </div>
-                <MessageComponent text={msg.text} sender="me" />
+                <MessageComponent text={msg.text} sender="me" key={index} />
               )
-            )}
+            )} */}
+
+            {messages.map((msg, index) => (
+              <MessageComponent
+                key={index}
+                text={msg.text}
+                sender={msg.sender === "user" ? "me" : "bot"}
+              />
+            ))}
             <div ref={messagesEndRef} />
 
             {isTyping && (
@@ -346,8 +357,8 @@ const HeaderComponent = ({ handleLogout }) => {
   );
 };
 
-const MessageComponent = ({ text, timestamp, sender, avatarUrl, name }) => {
-  const { Paragraph, Text } = Typography;
+const MessageComponent = ({ text, sender, name, key }) => {
+  const { Paragraph } = Typography;
 
   const isMe = sender === "me";
 
@@ -357,15 +368,9 @@ const MessageComponent = ({ text, timestamp, sender, avatarUrl, name }) => {
         "flex w-full items-end space-x-2 my-2",
         isMe ? "justify-end" : "justify-start"
       )}
+      key={key}
     >
-      {!isMe && (
-        // <img
-        //   src={avatarUrl}
-        //   alt="avatar"
-        //   className="w-8 h-8 rounded-full object-cover shadow"
-        // />
-        <TbMessageChatbot className="w-8 h-8 mb-8" />
-      )}
+      {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
 
       <div
         className={clsx(
@@ -379,17 +384,6 @@ const MessageComponent = ({ text, timestamp, sender, avatarUrl, name }) => {
             {name}
           </div>
         )}
-        {/* <div
-          className={clsx(
-            "rounded-2xl px-4 py-2 shadow-md text-sm break-words",
-            isMe
-              ? "bg-blue-500 text-white rounded-br-none"
-              : //   : "bg-gray-100 text-gray-800 rounded-bl-none"
-                "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
-          )}
-        >
-          {text}
-        </div> */}
 
         <Paragraph
           className={clsx(
@@ -404,12 +398,12 @@ const MessageComponent = ({ text, timestamp, sender, avatarUrl, name }) => {
           {text}
         </Paragraph>
 
-        <div className="text-[10px] text-gray-400 mt-1 ml-1" dir="ltr">
+        {/* <div className="text-[10px] text-gray-400 mt-1 ml-1" dir="ltr">
           {`${new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}`}
-        </div>
+        </div> */}
       </div>
     </div>
   );
