@@ -75,17 +75,6 @@ const Chatbot = () => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   if (queue.length === 0) return;
-
-  //   const interval = setInterval(() => {
-  //     setMessages((prev) => [...prev, queue[0]]);
-  //     setQueue((prevQueue) => prevQueue.slice(1));
-  //   }, 0);
-
-  //   return () => clearInterval(interval);
-  // }, [queue]);
-
   useEffect(() => {
     if (queue.length === 0) return;
 
@@ -100,7 +89,7 @@ const Chatbot = () => {
         setMessages((prevMessages) => [...prevMessages, first]);
         return rest;
       });
-    }, 300); // Adjust delay if you want a pause between messages
+    }, 300);
 
     return () => clearInterval(interval);
   }, [queue.length]);
@@ -127,6 +116,50 @@ const Chatbot = () => {
     return Math.floor(Math.random() * max);
   }
 
+  // const sendMessage = async () => {
+  //   const text = input.trim();
+  //   if (!text) return;
+
+  //   const userMessage = { text, sender: "user" };
+  //   setMessages((prevMessages) => [...prevMessages, userMessage]);
+  //   setInput("");
+  //   setRecommendations([]);
+  //   setIsTyping(true);
+
+  //   try {
+  //     const response = await axios.post(
+  //       "http://localhost:8000/api/message/",
+  //       { text },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem("access")}`,
+  //         },
+  //       }
+  //     );
+
+  //     const botResponses = splitBotMessage(response.data.response).map(
+  //       (msg) => ({
+  //         text: msg,
+  //         sender: "bot",
+  //       })
+  //     );
+
+  //     let randomNumber = getRandomInt(8);
+
+  //     if (response.data.state === "INVITE_TO_ATTEMPT_EXC") {
+  //       setExcImage(ExcImage[randomNumber]);
+  //     }
+
+  //     setQueue(botResponses);
+  //     setRecommendations(response.data.recommendations || []);
+  //   } catch (error) {
+  //     console.error("Error sending message:", error);
+  //     setQueue([{ text: "Error: Unable to fetch response.", sender: "bot" }]);
+  //   } finally {
+  //     setIsTyping(false);
+  //   }
+  // };
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
@@ -148,17 +181,22 @@ const Chatbot = () => {
         }
       );
 
-      const botResponses = splitBotMessage(response.data.response).map(
-        (msg) => ({
+      const messagesArray = splitBotMessage(response.data.response);
+      const images = ExcImage();
+      let botResponses;
+
+      if (response.data.state === "EXERCISE_SUGGESTION_DECIDER") {
+        const randomNumber = getRandomInt(images.length);
+        botResponses = messagesArray.map((msg, idx) => ({
           text: msg,
           sender: "bot",
-        })
-      );
-
-      let randomNumber = getRandomInt(8);
-
-      if (response.data.state === "INVITE_TO_ATTEMPT_EXC") {
-        setExcImage(ExcImage[randomNumber]);
+          image: idx === 0 ? images[randomNumber] : null,
+        }));
+      } else {
+        botResponses = messagesArray.map((msg) => ({
+          text: msg,
+          sender: "bot",
+        }));
       }
 
       setQueue(botResponses);
@@ -170,6 +208,7 @@ const Chatbot = () => {
       setIsTyping(false);
     }
   };
+
 
   const startRecording = async () => {
     try {
@@ -261,25 +300,12 @@ const Chatbot = () => {
             ref={chatAreaRef}
             className="flex-grow overflow-y-auto p-4 space-y-4 app-background"
           >
-            {/* {messages.flatMap((msg, index) =>
-              msg.sender === "bot" ? (
-                splitBotMessage(msg.text).map((splitMsg, subIndex) => (
-                  <MessageComponent
-                    key={`${index}-${subIndex}`}
-                    text={splitMsg}
-                    sender="bot"
-                  />
-                ))
-              ) : (
-                <MessageComponent text={msg.text} sender="me" key={index} />
-              )
-            )} */}
-
             {messages.map((msg, index) => (
               <MessageComponent
                 key={index}
                 text={msg.text}
                 sender={msg.sender === "user" ? "me" : "bot"}
+                image={msg.image}
               />
             ))}
             <div ref={messagesEndRef} />
@@ -357,9 +383,53 @@ const HeaderComponent = ({ handleLogout }) => {
   );
 };
 
-const MessageComponent = ({ text, sender, name, key }) => {
-  const { Paragraph } = Typography;
+// const MessageComponent = ({ text, sender, name, key }) => {
+//   const { Paragraph } = Typography;
 
+//   const isMe = sender === "me";
+
+//   return (
+//     <div
+//       className={clsx(
+//         "flex w-full items-end space-x-2 my-2",
+//         isMe ? "justify-end" : "justify-start"
+//       )}
+//       key={key}
+//     >
+//       {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
+
+//       <div
+//         className={clsx(
+//           "max-w-xs sm:max-w-md",
+//           isMe ? "text-right" : "text-left"
+//         )}
+//         dir="rtl"
+//       >
+//         {name && !isMe && (
+//           <div className="text-xs text-gray-500 font-medium mb-1 ml-1">
+//             {name}
+//           </div>
+//         )}
+
+//         <Paragraph
+//           className={clsx(
+//             "rounded-2xl px-4 py-2 shadow-md text-sm break-words paragraph",
+//             isMe
+//               ? "bg-blue-500 text-white rounded-br-none"
+//               :
+//               "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
+//           )}
+//           copyable={!isMe}
+//         >
+//           {text}
+//         </Paragraph>
+//       </div>
+//     </div>
+//   );
+// };
+
+const MessageComponent = ({ text, sender, name, image }) => {
+  const { Paragraph } = Typography;
   const isMe = sender === "me";
 
   return (
@@ -368,7 +438,6 @@ const MessageComponent = ({ text, sender, name, key }) => {
         "flex w-full items-end space-x-2 my-2",
         isMe ? "justify-end" : "justify-start"
       )}
-      key={key}
     >
       {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
 
@@ -385,25 +454,27 @@ const MessageComponent = ({ text, sender, name, key }) => {
           </div>
         )}
 
+        {image && (
+          <img
+            src={image.src}
+            alt={image.alt}
+            className="mt-2 rounded-lg max-w-full -48 object-contain"
+          />
+        )}
+
         <Paragraph
           className={clsx(
             "rounded-2xl px-4 py-2 shadow-md text-sm break-words paragraph",
             isMe
               ? "bg-blue-500 text-white rounded-br-none"
-              : //   : "bg-gray-100 text-gray-800 rounded-bl-none"
-                "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
+              : "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
           )}
           copyable={!isMe}
         >
           {text}
         </Paragraph>
 
-        {/* <div className="text-[10px] text-gray-400 mt-1 ml-1" dir="ltr">
-          {`${new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}`}
-        </div> */}
+
       </div>
     </div>
   );
