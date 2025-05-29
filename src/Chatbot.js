@@ -394,7 +394,7 @@ const MessageComponent = ({ text, sender, name, image }) => {
 
         <Paragraph
           className={clsx(
-            "rounded-2xl px-4 py-2 shadow-md text-lg break-words paragraph",
+            "rounded-2xl px-4 text-sm py-2 shadow-md text-lg break-words paragraph",
             isMe
               ? "bg-blue-500 text-white rounded-br-none"
               : "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
