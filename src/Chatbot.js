@@ -29,6 +29,7 @@ const Chatbot = () => {
   const [queue, setQueue] = useState([]);
   const [excImage, setExcImage] = useState(null);
   const [isThisExc, setIsThisExc] = useState(false);
+  const [excNum, setExcNum] = useState(null);
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -118,50 +119,6 @@ const Chatbot = () => {
     return Math.floor(Math.random() * max);
   }
 
-  // const sendMessage = async () => {
-  //   const text = input.trim();
-  //   if (!text) return;
-
-  //   const userMessage = { text, sender: "user" };
-  //   setMessages((prevMessages) => [...prevMessages, userMessage]);
-  //   setInput("");
-  //   setRecommendations([]);
-  //   setIsTyping(true);
-
-  //   try {
-  //     const response = await axios.post(
-  //       "http://localhost:8000/api/message/",
-  //       { text },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("access")}`,
-  //         },
-  //       }
-  //     );
-
-  //     const botResponses = splitBotMessage(response.data.response).map(
-  //       (msg) => ({
-  //         text: msg,
-  //         sender: "bot",
-  //       })
-  //     );
-
-  //     let randomNumber = getRandomInt(8);
-
-  //     if (response.data.state === "INVITE_TO_ATTEMPT_EXC") {
-  //       setExcImage(ExcImage[randomNumber]);
-  //     }
-
-  //     setQueue(botResponses);
-  //     setRecommendations(response.data.recommendations || []);
-  //   } catch (error) {
-  //     console.error("Error sending message:", error);
-  //     setQueue([{ text: "Error: Unable to fetch response.", sender: "bot" }]);
-  //   } finally {
-  //     setIsTyping(false);
-  //   }
-  // };
-
   const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
@@ -184,16 +141,33 @@ const Chatbot = () => {
       );
 
       const messagesArray = splitBotMessage(response.data.response);
-      const images = ExcImage();
       let botResponses;
 
       if (response.data.state === "EXERCISE_SUGGESTION_DECIDER") {
-        const randomNumber = getRandomInt(images.length);
+        console.log(response.data.excercise_number, typeof response.data.excercise_number);
+        setExcNum(parseInt(response.data.excercise_number));
+
+        const images = ExcImage();
+        const exc = images[response.data.excercise_number];
+
+        console.log("exc", exc);
+
+        const imageOptions = exc?.src || [];
+        const validImages = (exc?.src || []).filter((img) => img);
+
+        const selectedImage =
+          validImages.length > 1
+            ? validImages[getRandomInt(validImages.length)]
+            : validImages[0] || null;
+
         botResponses = messagesArray.map((msg, idx) => ({
           text: msg,
           sender: "bot",
-          image: idx === 0 ? images[randomNumber] : null,
+          image: idx === 0 && selectedImage
+            ? { src: selectedImage, alt: exc?.alt || "exc image" }
+            : null,
         }));
+
       } else {
         botResponses = messagesArray.map((msg) => ({
           text: msg,
@@ -383,51 +357,6 @@ const HeaderComponent = ({ handleLogout }) => {
     </div>
   );
 };
-
-// const MessageComponent = ({ text, sender, name, key }) => {
-//   const { Paragraph } = Typography;
-
-//   const isMe = sender === "me";
-
-//   return (
-//     <div
-//       className={clsx(
-//         "flex w-full items-end space-x-2 my-2",
-//         isMe ? "justify-end" : "justify-start"
-//       )}
-//       key={key}
-//     >
-//       {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
-
-//       <div
-//         className={clsx(
-//           "max-w-xs sm:max-w-md",
-//           isMe ? "text-right" : "text-left"
-//         )}
-//         dir="rtl"
-//       >
-//         {name && !isMe && (
-//           <div className="text-xs text-gray-500 font-medium mb-1 ml-1">
-//             {name}
-//           </div>
-//         )}
-
-//         <Paragraph
-//           className={clsx(
-//             "rounded-2xl px-4 py-2 shadow-md text-sm break-words paragraph",
-//             isMe
-//               ? "bg-blue-500 text-white rounded-br-none"
-//               :
-//               "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
-//           )}
-//           copyable={!isMe}
-//         >
-//           {text}
-//         </Paragraph>
-//       </div>
-//     </div>
-//   );
-// };
 
 const MessageComponent = ({ text, sender, name, image }) => {
   const { Paragraph } = Typography;
