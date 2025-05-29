@@ -6,6 +6,7 @@ import axios from "axios";
 import { ExcImage } from "./Images";
 import { message, Typography } from "antd";
 import clsx from "clsx";
+import { Collapse } from "antd";
 import "./App.css";
 
 const Chatbot = () => {
@@ -208,7 +209,6 @@ const Chatbot = () => {
       setIsTyping(false);
     }
   };
-
 
   const startRecording = async () => {
     try {
@@ -473,9 +473,22 @@ const MessageComponent = ({ text, sender, name, image }) => {
         >
           {text}
         </Paragraph>
-
-
       </div>
+    </div>
+  );
+};
+
+const CollapsableExplainability = ({ text }) => {
+  const items = [
+    {
+      key: "1",
+      label: "چرا این تمرین برای من مفید است؟",
+      children: <p>{text}</p>,
+    },
+  ];
+  return (
+    <div className="w-1/3">
+      <Collapse items={items} defaultActiveKey={["1"]} />
     </div>
   );
 };
