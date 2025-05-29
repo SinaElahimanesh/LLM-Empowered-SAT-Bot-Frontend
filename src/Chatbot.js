@@ -30,6 +30,7 @@ const Chatbot = () => {
   const [excImage, setExcImage] = useState(null);
   const [isThisExc, setIsThisExc] = useState(false);
   const [excNum, setExcNum] = useState(null);
+  const [explain, setExplain] = useState(null);
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -144,8 +145,13 @@ const Chatbot = () => {
       let botResponses;
 
       if (response.data.state === "EXERCISE_SUGGESTION_DECIDER") {
-        console.log(response.data.excercise_number, typeof response.data.excercise_number);
+        console.log(
+          response.data.excercise_number,
+          typeof response.data.excercise_number
+        );
         setExcNum(parseInt(response.data.excercise_number));
+
+        setExplain(response.data.explainibility);
 
         const images = ExcImage();
         const exc = images[response.data.excercise_number];
@@ -163,11 +169,12 @@ const Chatbot = () => {
         botResponses = messagesArray.map((msg, idx) => ({
           text: msg,
           sender: "bot",
-          image: idx === 0 && selectedImage
-            ? { src: selectedImage, alt: exc?.alt || "exc image" }
-            : null,
+          image:
+            idx === 0 && selectedImage
+              ? { src: selectedImage, alt: exc?.alt || "exc image" }
+              : null,
+          explain: explain,
         }));
-
       } else {
         botResponses = messagesArray.map((msg) => ({
           text: msg,
@@ -281,6 +288,7 @@ const Chatbot = () => {
                 text={msg.text}
                 sender={msg.sender === "user" ? "me" : "bot"}
                 image={msg.image}
+                explain={msg.explain}
               />
             ))}
             <div ref={messagesEndRef} />
@@ -358,7 +366,7 @@ const HeaderComponent = ({ handleLogout }) => {
   );
 };
 
-const MessageComponent = ({ text, sender, name, image }) => {
+const MessageComponent = ({ text, sender, name, image, explain }) => {
   const { Paragraph } = Typography;
   const isMe = sender === "me";
 
@@ -403,6 +411,7 @@ const MessageComponent = ({ text, sender, name, image }) => {
         >
           {text}
         </Paragraph>
+        {explain && <CollapsableExplainability text={explain} />}
       </div>
     </div>
   );
@@ -419,7 +428,7 @@ const CollapsableExplainability = ({ text }) => {
     },
   ];
   return (
-    <div className="w-1/3">
+    <div className="w-full">
       <Collapse
         items={items}
         bordered={false}
