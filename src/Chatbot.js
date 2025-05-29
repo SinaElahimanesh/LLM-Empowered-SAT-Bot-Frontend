@@ -8,6 +8,7 @@ import { message, Typography } from "antd";
 import clsx from "clsx";
 import { Collapse } from "antd";
 import "./App.css";
+import { CaretDownOutlined } from "@ant-design/icons";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -482,13 +483,22 @@ const CollapsableExplainability = ({ text }) => {
   const items = [
     {
       key: "1",
-      label: "چرا این تمرین برای من مفید است؟",
-      children: <p>{text}</p>,
+      label: (
+        <p className="text-sm paragraph">چرا این تمرین برای من مفید است؟</p>
+      ),
+      children: <p className="text-sm paragraph">{text}</p>,
     },
   ];
   return (
     <div className="w-1/3">
-      <Collapse items={items} defaultActiveKey={["1"]} />
+      <Collapse
+        items={items}
+        bordered={false}
+        expandIcon={({ isActive }) => (
+          <CaretDownOutlined rotate={isActive ? 180 : 0} />
+        )}
+        className="bg-indigo-200 shadow-md"
+      />
     </div>
   );
 };
