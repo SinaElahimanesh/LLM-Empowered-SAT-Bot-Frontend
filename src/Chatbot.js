@@ -130,9 +130,11 @@ const Chatbot = () => {
     setRecommendations([]);
     setIsTyping(true);
 
+    const baseURL = process.env.REACT_APP_BASE_URL;
+
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/message/",
+        `${baseURL}/api/message/`,
         { text },
         {
           headers: {
@@ -237,10 +239,11 @@ const Chatbot = () => {
   const sendAudioMessage = async (audioBlob) => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "voice_message.wav");
+    const baseURL = process.env.REACT_APP_BASE_URL;
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/send-audio/",
+        `${baseURL}/api/send-audio/`,
         formData,
         {
           headers: {

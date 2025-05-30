@@ -18,11 +18,10 @@ const Register = ({ onRegister }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const baseURL = process.env.REACT_APP_BASE_URL;
+
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/register/",
-        formData
-      );
+      const response = await axios.post(`${baseURL}/api/register/`, formData);
 
       messageApi.open({
         type: "success",
