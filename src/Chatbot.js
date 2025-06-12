@@ -122,7 +122,7 @@ const Chatbot = () => {
 
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || isChatEnded) return; // Prevent sending if chat ended
+    if (!text || isChatEnded) return;
 
     const userMessage = { text, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
