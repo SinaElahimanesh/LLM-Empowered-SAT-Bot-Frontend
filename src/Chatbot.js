@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect } from "react";
-import { FiSend, FiMic, FiStopCircle } from "react-icons/fi";
-import { CiLogout } from "react-icons/ci";
-import { TbMessageChatbot, TbMessageChatbotFilled } from "react-icons/tb";
-import axios from "axios";
-import { ExcImage } from "./Images";
-import { message, Typography } from "antd";
-import clsx from "clsx";
-import { Collapse } from "antd";
-import "./App.css";
 import { CaretDownOutlined } from "@ant-design/icons";
+import { Collapse, message, Typography } from "antd";
+import axios from "axios";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+import { CiLogout } from "react-icons/ci";
+import { FiMic, FiSend, FiStopCircle } from "react-icons/fi";
+import { TbMessageChatbot, TbMessageChatbotFilled } from "react-icons/tb";
+import "./App.css";
+import { ExcImage } from "./Images";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -31,6 +30,7 @@ const Chatbot = () => {
   const [isThisExc, setIsThisExc] = useState(false);
   const [excNum, setExcNum] = useState(null);
   const [explain, setExplain] = useState(null);
+  const [isChatEnded, setIsChatEnded] = useState(false);
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -122,7 +122,7 @@ const Chatbot = () => {
 
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text) return;
+    if (!text || isChatEnded) return;
 
     const userMessage = { text, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -186,6 +186,10 @@ const Chatbot = () => {
 
       setQueue(botResponses);
       setRecommendations(response.data.recommendations || []);
+
+      if (response.data.state === "END") {
+        setIsChatEnded(true);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       setQueue([{ text: "Error: Unable to fetch response.", sender: "bot" }]);
@@ -274,6 +278,25 @@ const Chatbot = () => {
     window.location.reload();
   };
 
+  const handleRestart = async () => {
+    const baseURL = process.env.REACT_APP_BASE_URL;
+    try {
+      await axios.post(
+        `${baseURL}/api/end-session/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error ending chat:", error);
+    }
+    setIsChatEnded(false);
+    restartChat();
+  };
+
   return (
     <>
       {contextHolder}
@@ -307,6 +330,17 @@ const Chatbot = () => {
                 </div>
               </div>
             )}
+
+            {isChatEnded && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={handleRestart}
+                  className="px-6 py-2 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition"
+                >
+                  دوباره باهام گفت‌وگو کن
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center px-4 py-3 bg- shadow-lg">
@@ -322,6 +356,7 @@ const Chatbot = () => {
                 }
               }}
               dir="rtl"
+              disabled={isChatEnded}
             />
             {recording && (
               <div dir="rtl" className="flex justify-start">
@@ -336,12 +371,14 @@ const Chatbot = () => {
             <button
               onClick={recording ? stopRecording : startRecording}
               className="ml-2 p-3 rounded-full bg-red-500 text-white"
+              disabled={isChatEnded}
             >
               {recording ? <FiStopCircle size={20} /> : <FiMic size={20} />}
             </button>
             <button
               onClick={sendMessage}
               className="ml-2 p-3 rounded-full bg-blue-500 text-white"
+              disabled={isChatEnded}
             >
               <FiSend size={20} />
             </button>
