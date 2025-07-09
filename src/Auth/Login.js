@@ -13,12 +13,12 @@ const Login = ({ onLogin }) => {
   };
 
   const handleLogin = async (e) => {
+    const baseURL = process.env.REACT_APP_BASE_URL;
+
     e.preventDefault();
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/login/",
-        formData
-      );
+      const response = await axios.post(`${baseURL}/api/login/`, formData);
+
       localStorage.setItem("access", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
       onLogin();
