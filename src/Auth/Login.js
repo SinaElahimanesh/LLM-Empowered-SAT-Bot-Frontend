@@ -5,14 +5,12 @@ import { message } from "antd";
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({ username: "", password: "" });
-
   const [messageApi, contextHolder] = message.useMessage();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,12 +19,19 @@ const Login = ({ onLogin }) => {
         "http://localhost:8000/api/login/",
         formData
       );
-
       localStorage.setItem("access", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
       onLogin();
-      window.location.reload();
-      navigate("/chatbot");
+      // Debug logs
+      console.log("response", response.data);
+      const group = (response.data.group || "").toLowerCase().trim();
+      console.log("group value:", group);
+      // Robust redirect
+      if (group === "intervention") {
+        navigate("/alpha");
+      } else {
+        navigate("/beta");
+      }
     } catch (err) {
       console.error(err);
       messageApi.open({

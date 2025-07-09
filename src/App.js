@@ -115,24 +115,26 @@ import Chatbot from "./Chatbot";
 import Login from "./Auth/Login";
 import Register from "./Auth/Register";
 import AudioRecorder from "./AudioRecorder";
+import ChatbotSimple from "./ChatbotSimple";
 
-// import Register from "./Auth/Register";
-// import Login from "./Auth/Login";
-// import Chatbot from "./Chatbot";
-// import AudioRecorder from "./AudioRecorder";
-
-// Check if access token exists
 const checkAuth = () => {
   return !!localStorage.getItem("access");
 };
 
-// Private Route Wrapper
 const PrivateRoute = ({ children }) => {
   return checkAuth() ? children : <Navigate to="/login" replace />;
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(checkAuth());
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setIsAuthenticated(checkAuth());
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   useEffect(() => {
     setIsAuthenticated(checkAuth());
@@ -152,7 +154,6 @@ function App() {
         console.error('Failed to end session:', e);
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -163,10 +164,11 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {checkAuth() ? (
+          {isAuthenticated ? (
             <>
-              <Route path="/chatbot" element={<Chatbot />} />
-              <Route path="*" element={<Navigate to="/chatbot" replace />} />
+              <Route path="/alpha" element={<Chatbot />} />
+              <Route path="/beta" element={<ChatbotSimple />} />
+              {/* Removed wildcard redirect to /alpha */}
             </>
           ) : (
             <>

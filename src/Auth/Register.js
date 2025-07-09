@@ -23,16 +23,17 @@ const Register = ({ onRegister }) => {
         "http://localhost:8000/api/register/",
         formData
       );
-
       messageApi.open({
         type: "success",
-        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. در حال انتقال به صفحه ورود ...`,
+        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. در حال انتقال ...`,
       });
-      // Automatically log in the user after registration
       onRegister();
-      setTimeout(() => {
-        navigate("/login"); // Redirect to the login page
-      }, 1500);
+      // Redirect based on group
+      if (response.data.group === "intervention") {
+        navigate("/alpha");
+      } else {
+        navigate("/beta");
+      }
     } catch (error) {
       console.log("reg err: ", error);
       messageApi.open({
