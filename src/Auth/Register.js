@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Input, message } from "antd";
 
-const Register = ({ onRegister }) => {
+const Register = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -11,6 +11,7 @@ const Register = ({ onRegister }) => {
   });
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
+  const baseURL = process.env.REACT_APP_BASE_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -18,22 +19,18 @@ const Register = ({ onRegister }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const baseURL = process.env.REACT_APP_BASE_URL;
-
     try {
-      const response = await axios.post(`${baseURL}/api/register/`, formData);
-
+      await axios.post(
+        `${baseURL}/api/register/`,
+        formData
+      );
       messageApi.open({
         type: "success",
-        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. در حال انتقال ...`,
+        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. لطفاً وارد شوید.`,
       });
-      onRegister();
-      // Redirect based on group
-      if (response.data.group === "intervention") {
-        navigate("/alpha");
-      } else {
-        navigate("/beta");
-      }
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (error) {
       console.log("reg err: ", error);
       messageApi.open({
@@ -52,7 +49,6 @@ const Register = ({ onRegister }) => {
           className="w-full  max-w-md bg-white shadow-lg rounded-lg p-6"
         >
           <h2 className="text-2xl font-bold mb-4">ثبت‌ نام</h2>
-          {/* {message && <p className="text-green-500">{message}</p>} */}
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">نام‌ کاربری</label>
             <Input
@@ -86,7 +82,6 @@ const Register = ({ onRegister }) => {
               required
             />
           </div>
-          {/* {error && <p className="text-red-500">{error}</p>} */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"

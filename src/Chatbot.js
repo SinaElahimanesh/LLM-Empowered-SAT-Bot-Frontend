@@ -1,13 +1,11 @@
-import { CaretDownOutlined } from "@ant-design/icons";
-import { Collapse, message, Typography } from "antd";
-import axios from "axios";
-import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { FiSend, FiMic, FiStopCircle } from "react-icons/fi";
 import { CiLogout } from "react-icons/ci";
-import { FiMic, FiSend, FiStopCircle } from "react-icons/fi";
 import { TbMessageChatbot, TbMessageChatbotFilled } from "react-icons/tb";
+import axios from "axios";
+import { message, Typography } from "antd";
+import clsx from "clsx";
 import "./App.css";
-import { ExcImage } from "./Images";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -19,22 +17,12 @@ const Chatbot = () => {
     "سلام",
     "به کمک نیاز دارم",
   ]);
-  const [dots, setDots] = useState(".");
-  const [chatState, setChatState] = useState(null);
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const lastMessageRef = useRef(null);
-  const [queue, setQueue] = useState([]);
-  const [excImage, setExcImage] = useState(null);
-  const [isThisExc, setIsThisExc] = useState(false);
-  const [excNum, setExcNum] = useState(null);
-  const [explain, setExplain] = useState(null);
-  const [isChatEnded, setIsChatEnded] = useState(false);
-
   const [messageApi, contextHolder] = message.useMessage();
-
   const messagesEndRef = useRef(null);
+  const chatAreaRef = useRef(null);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -42,99 +30,17 @@ const Chatbot = () => {
     }
   }, [messages]);
 
-  const chatAreaRef = useRef(null);
-
-  const splitBotMessage = (text) => {
-    if (!text) return;
-    const words = text?.split(" ");
-    if (words?.length <= 20) return [text];
-
-    let messages = [];
-    let tempMessage = [];
-
-    for (let i = 0; i < words.length; i++) {
-      tempMessage.push(words[i]);
-
-      if (tempMessage.length >= 20 && /[.!?]$/.test(words[i])) {
-        messages.push(tempMessage.join(" "));
-        tempMessage = [];
-      }
-    }
-
-    if (tempMessage.length) messages.push(tempMessage.join(" "));
-    return messages;
-  };
-
-  useEffect(() => {
-    localStorage.setItem(
-      "chat_recommendations",
-      JSON.stringify(recommendations)
-    );
-  }, [recommendations]);
-
-  useEffect(() => {
-    const savedRecs = localStorage.getItem("chat_recommendations");
-    if (savedRecs) {
-      setRecommendations(JSON.parse(savedRecs));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (queue.length === 0) return;
-
-    const interval = setInterval(() => {
-      setQueue((prevQueue) => {
-        if (prevQueue.length === 0) {
-          clearInterval(interval);
-          return prevQueue;
-        }
-
-        const [first, ...rest] = prevQueue;
-        setMessages((prevMessages) => [...prevMessages, first]);
-        return rest;
-      });
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [queue.length]);
-
-  const restartChat = () => {
-    setRecommendations(["سلام", "به کمک نیاز دارم"]);
-    setChatState(null);
-    const welcomeMessage = [{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }];
-    setMessages(welcomeMessage);
-    localStorage.setItem("chat_messages", JSON.stringify(welcomeMessage));
-  };
-
-  useEffect(() => {
-    if (recommendations.length === 0 && isTyping) {
-      const interval = setInterval(() => {
-        setDots((prev) => (prev.length < 3 ? prev + "." : "."));
-      }, 500);
-
-      return () => clearInterval(interval);
-    }
-  }, [recommendations, isTyping]);
-
-  function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-  }
-
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || isChatEnded) return;
-
+    if (!text) return;
     const userMessage = { text, sender: "user" };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput("");
     setRecommendations([]);
     setIsTyping(true);
-
-    const baseURL = process.env.REACT_APP_BASE_URL;
-
     try {
       const response = await axios.post(
-        `${baseURL}/api/message/`,
+        "http://localhost:8000/api/message/",
         { text },
         {
           headers: {
@@ -142,57 +48,16 @@ const Chatbot = () => {
           },
         }
       );
-
-      const messagesArray = splitBotMessage(response.data.response);
-      let botResponses;
-
-      if (response.data.state === "EXERCISE_SUGGESTION_DECIDER") {
-        console.log(
-          response.data.excercise_number,
-          typeof response.data.excercise_number
-        );
-        setExcNum(parseInt(response.data.excercise_number));
-
-        setExplain(response.data.explainibility);
-
-        const images = ExcImage();
-        const exc = images[response.data.excercise_number];
-
-        console.log("exc", exc);
-
-        const imageOptions = exc?.src || [];
-        const validImages = (exc?.src || []).filter((img) => img);
-
-        const selectedImage =
-          validImages.length > 1
-            ? validImages[getRandomInt(validImages.length)]
-            : validImages[0] || null;
-
-        botResponses = messagesArray.map((msg, idx) => ({
-          text: msg,
-          sender: "bot",
-          image:
-            idx === 0 && selectedImage
-              ? { src: selectedImage, alt: exc?.alt || "exc image" }
-              : null,
-          explain: explain,
-        }));
-      } else {
-        botResponses = messagesArray.map((msg) => ({
-          text: msg,
-          sender: "bot",
-        }));
-      }
-
-      setQueue(botResponses);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: response.data.response, sender: "bot" },
+      ]);
       setRecommendations(response.data.recommendations || []);
-
-      if (response.data.state === "END") {
-        setIsChatEnded(true);
-      }
     } catch (error) {
-      console.error("Error sending message:", error);
-      setQueue([{ text: "Error: Unable to fetch response.", sender: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { text: "Error: Unable to fetch response.", sender: "bot" },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -201,19 +66,15 @@ const Chatbot = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
       setRecording(true);
       audioChunksRef.current = [];
-
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new window.MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
-
       mediaRecorder.onstop = async () => {
         setRecording(false);
         const audioBlob = new Blob(audioChunksRef.current, {
@@ -221,10 +82,8 @@ const Chatbot = () => {
         });
         sendAudioMessage(audioBlob);
       };
-
       mediaRecorder.start();
     } catch (error) {
-      console.error("Microphone access error:", error);
       messageApi.open({
         type: "error",
         content:
@@ -243,11 +102,9 @@ const Chatbot = () => {
   const sendAudioMessage = async (audioBlob) => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "voice_message.wav");
-    const baseURL = process.env.REACT_APP_BASE_URL;
-
     try {
       const response = await axios.post(
-        `${baseURL}/api/send-audio/`,
+        "http://localhost:8000/api/message/", // Use main endpoint for alpha
         formData,
         {
           headers: {
@@ -256,16 +113,12 @@ const Chatbot = () => {
           },
         }
       );
-
-      const botMessage = { text: response.data.transcription, sender: "user" };
-      // setMessages((prevMessages) => [...prevMessages, botMessage]);
-      setInput(botMessage.text);
-      sendMessage();
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: response.data.response, sender: "bot" },
+      ]);
+      setRecommendations(response.data.recommendations || []);
     } catch (error) {
-      console.error(
-        "Error sending audio message:",
-        error.response?.data || error.message
-      );
       setMessages((prev) => [
         ...prev,
         { text: "خطا در ارسال پیام صوتی.", sender: "user" },
@@ -278,32 +131,12 @@ const Chatbot = () => {
     window.location.reload();
   };
 
-  const handleRestart = async () => {
-    const baseURL = process.env.REACT_APP_BASE_URL;
-    try {
-      await axios.post(
-        `${baseURL}/api/end-session/`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Error ending chat:", error);
-    }
-    setIsChatEnded(false);
-    restartChat();
-  };
-
   return (
     <>
       {contextHolder}
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
         <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
           <HeaderComponent handleLogout={handleLogout} />
-
           <div
             ref={chatAreaRef}
             className="flex-grow overflow-y-auto p-4 space-y-4 app-background"
@@ -314,11 +147,9 @@ const Chatbot = () => {
                 text={msg.text}
                 sender={msg.sender === "user" ? "me" : "bot"}
                 image={msg.image}
-                explain={msg.explain}
               />
             ))}
             <div ref={messagesEndRef} />
-
             {isTyping && (
               <div className="flex bg-grey-600 justify-start">
                 <div className="px-4 py-2 bg-gray-200 rounded-r-2xl rounded-tl-2xl">
@@ -330,19 +161,18 @@ const Chatbot = () => {
                 </div>
               </div>
             )}
-
-            {isChatEnded && (
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={handleRestart}
-                  className="px-6 py-2 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition"
-                >
-                  دوباره باهام گفت‌وگو کن
-                </button>
-              </div>
-            )}
           </div>
-
+          <div className="flex flex-wrap gap-2 px-4 py-2">
+            {recommendations.map((rec, idx) => (
+              <button
+                key={idx}
+                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full shadow hover:bg-blue-200"
+                onClick={() => setInput(rec)}
+              >
+                {rec}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center px-4 py-3 bg- shadow-lg">
             <input
               type="text"
@@ -356,7 +186,6 @@ const Chatbot = () => {
                 }
               }}
               dir="rtl"
-              disabled={isChatEnded}
             />
             {recording && (
               <div dir="rtl" className="flex justify-start">
@@ -371,14 +200,12 @@ const Chatbot = () => {
             <button
               onClick={recording ? stopRecording : startRecording}
               className="ml-2 p-3 rounded-full bg-red-500 text-white"
-              disabled={isChatEnded}
             >
               {recording ? <FiStopCircle size={20} /> : <FiMic size={20} />}
             </button>
             <button
               onClick={sendMessage}
               className="ml-2 p-3 rounded-full bg-blue-500 text-white"
-              disabled={isChatEnded}
             >
               <FiSend size={20} />
             </button>
@@ -406,10 +233,9 @@ const HeaderComponent = ({ handleLogout }) => {
   );
 };
 
-const MessageComponent = ({ text, sender, name, image, explain }) => {
+const MessageComponent = ({ text, sender, name, image }) => {
   const { Paragraph } = Typography;
   const isMe = sender === "me";
-
   return (
     <div
       className={clsx(
@@ -418,7 +244,6 @@ const MessageComponent = ({ text, sender, name, image, explain }) => {
       )}
     >
       {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
-
       <div
         className={clsx(
           "max-w-xs sm:max-w-md",
@@ -431,7 +256,6 @@ const MessageComponent = ({ text, sender, name, image, explain }) => {
             {name}
           </div>
         )}
-
         {image && (
           <img
             src={image.src}
@@ -439,10 +263,9 @@ const MessageComponent = ({ text, sender, name, image, explain }) => {
             className="mt-2 rounded-lg max-w-full -48 object-contain"
           />
         )}
-
         <Paragraph
           className={clsx(
-            "rounded-2xl px-4 text-sm py-2 shadow-md text-lg break-words paragraph",
+            "rounded-2xl px-4 py-2 shadow-md text-lg break-words paragraph",
             isMe
               ? "bg-blue-500 text-white rounded-br-none"
               : "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
@@ -451,32 +274,7 @@ const MessageComponent = ({ text, sender, name, image, explain }) => {
         >
           {text}
         </Paragraph>
-        {explain && <CollapsableExplainability text={explain} />}
       </div>
-    </div>
-  );
-};
-
-const CollapsableExplainability = ({ text }) => {
-  const items = [
-    {
-      key: "1",
-      label: (
-        <p className="text-sm paragraph">چرا این تمرین برای من مفید است؟</p>
-      ),
-      children: <p className="text-sm paragraph">{text}</p>,
-    },
-  ];
-  return (
-    <div className="w-full">
-      <Collapse
-        items={items}
-        bordered={false}
-        expandIcon={({ isActive }) => (
-          <CaretDownOutlined rotate={isActive ? 180 : 0} />
-        )}
-        className="bg-indigo-200 shadow-md"
-      />
     </div>
   );
 };
