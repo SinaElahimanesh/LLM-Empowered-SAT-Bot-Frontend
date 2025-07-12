@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Input, message } from "antd";
 
-const Register = () => {
+const Register = ({ onRegister }) => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -20,17 +20,25 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(
+      const response = await axios.post(
         `${baseURL}/api/register/`,
         formData
       );
       messageApi.open({
         type: "success",
-        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. لطفاً وارد شوید.`,
+        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. در حال انتقال ...`,
       });
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      
+      if (onRegister) {
+        onRegister();
+      }
+      
+      // Redirect based on group
+      if (response.data.group === "intervention") {
+        navigate("/alpha");
+      } else {
+        navigate("/beta");
+      }
     } catch (error) {
       console.log("reg err: ", error);
       messageApi.open({

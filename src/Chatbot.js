@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiSend, FiMic, FiStopCircle } from "react-icons/fi";
+import { FiSend, FiMic, FiStopCircle, FiRefreshCw } from "react-icons/fi";
 import { CiLogout } from "react-icons/ci";
 import { TbMessageChatbot, TbMessageChatbotFilled } from "react-icons/tb";
 import axios from "axios";
 import { message, Typography } from "antd";
 import clsx from "clsx";
 import "./App.css";
+import ExerciseMessage from "./ExerciseMessage";
+import { ExcImage } from "./Images";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -48,10 +50,24 @@ const Chatbot = () => {
           },
         }
       );
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: response.data.response, sender: "bot" },
-      ]);
+      
+      // Check if response contains exercise data
+      let botMessage = { text: response.data.response, sender: "bot" };
+      
+      if (response.data.exercise_number && response.data.exercise_number > 0) {
+        const exerciseImages = ExcImage();
+        const exerciseImage = exerciseImages[response.data.exercise_number];
+        if (exerciseImage && exerciseImage.src && exerciseImage.src[0]) {
+          botMessage = {
+            text: response.data.response,
+            sender: "bot",
+            isExercise: true,
+            exerciseImage: exerciseImage.src[0]
+          };
+        }
+      }
+      
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
       setRecommendations(response.data.recommendations || []);
     } catch (error) {
       setMessages((prev) => [
@@ -113,10 +129,24 @@ const Chatbot = () => {
           },
         }
       );
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: response.data.response, sender: "bot" },
-      ]);
+      
+      // Check if response contains exercise data
+      let botMessage = { text: response.data.response, sender: "bot" };
+      
+      if (response.data.exercise_number && response.data.exercise_number > 0) {
+        const exerciseImages = ExcImage();
+        const exerciseImage = exerciseImages[response.data.exercise_number];
+        if (exerciseImage && exerciseImage.src && exerciseImage.src[0]) {
+          botMessage = {
+            text: response.data.response,
+            sender: "bot",
+            isExercise: true,
+            exerciseImage: exerciseImage.src[0]
+          };
+        }
+      }
+      
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
       setRecommendations(response.data.recommendations || []);
     } catch (error) {
       setMessages((prev) => [
@@ -131,12 +161,18 @@ const Chatbot = () => {
     window.location.reload();
   };
 
+  const handleRestart = () => {
+    setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
+    setRecommendations(["سلام", "به کمک نیاز دارم"]);
+    setInput("");
+  };
+
   return (
     <>
       {contextHolder}
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
         <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
-          <HeaderComponent handleLogout={handleLogout} />
+          <HeaderComponent handleLogout={handleLogout} handleRestart={handleRestart} />
           <div
             ref={chatAreaRef}
             className="flex-grow overflow-y-auto p-4 space-y-4 app-background"
@@ -147,6 +183,8 @@ const Chatbot = () => {
                 text={msg.text}
                 sender={msg.sender === "user" ? "me" : "bot"}
                 image={msg.image}
+                isExercise={msg.isExercise}
+                exerciseImage={msg.exerciseImage}
               />
             ))}
             <div ref={messagesEndRef} />
@@ -216,15 +254,24 @@ const Chatbot = () => {
   );
 };
 
-const HeaderComponent = ({ handleLogout }) => {
+const HeaderComponent = ({ handleLogout, handleRestart }) => {
   return (
     <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md">
-      <button
-        className="hover:text-red-400 transition duration-200"
-        onClick={handleLogout}
-      >
-        <CiLogout size={24} />
-      </button>
+      <div className="flex items-center space-x-2">
+        <button
+          className="hover:text-red-400 transition duration-200"
+          onClick={handleLogout}
+        >
+          <CiLogout size={24} />
+        </button>
+        <button
+          className="hover:text-yellow-400 transition duration-200"
+          onClick={handleRestart}
+          title="شروع مجدد"
+        >
+          <FiRefreshCw size={24} />
+        </button>
+      </div>
       <h2 className="text-xl font-bold">بات دلبستگی به خود</h2>
       <div className="rounded-full bg-indigo-800 p-2 shadow-md">
         <TbMessageChatbotFilled className="text-2xl" />
@@ -233,9 +280,15 @@ const HeaderComponent = ({ handleLogout }) => {
   );
 };
 
-const MessageComponent = ({ text, sender, name, image }) => {
+const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage }) => {
   const { Paragraph } = Typography;
   const isMe = sender === "me";
+  
+  // If it's an exercise message, use the ExerciseMessage component
+  if (isExercise && exerciseImage) {
+    return <ExerciseMessage msg={text} img={exerciseImage} />;
+  }
+  
   return (
     <div
       className={clsx(
