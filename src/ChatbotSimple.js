@@ -8,6 +8,7 @@ import clsx from "clsx";
 import "./App.css";
 import ExerciseMessage from "./ExerciseMessage";
 import { ExcImage } from "./Images";
+import { splitMessage, addMessagesWithDelay } from "./utils/messageSplitter";
 
 const ChatbotSimple = () => {
   const [messages, setMessages] = useState([
@@ -20,8 +21,9 @@ const ChatbotSimple = () => {
     "به کمک نیاز دارم",
   ]);
   const [recording, setRecording] = useState(false);
+  const [currentState, setCurrentState] = useState("");
   const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const audioChunksRef = useRef(null);
   const [messageApi, contextHolder] = message.useMessage();
   const messagesEndRef = useRef(null);
   const chatAreaRef = useRef(null);
@@ -52,23 +54,53 @@ const ChatbotSimple = () => {
       );
       
       // Check if response contains exercise data
-      let botMessage = { text: response.data.response, sender: "bot" };
+      let botResponse = response.data.response;
+      const currentState = response.data.state || "";
       
       if (response.data.exercise_number && response.data.exercise_number > 0) {
         const exerciseImages = ExcImage();
         const exerciseImage = exerciseImages[response.data.exercise_number];
         if (exerciseImage && exerciseImage.src && exerciseImage.src[0]) {
-          botMessage = {
-            text: response.data.response,
+          // For exercise messages, don't split them
+          const botMessage = {
+            text: botResponse,
             sender: "bot",
             isExercise: true,
             exerciseImage: exerciseImage.src[0]
           };
+          setMessages((prevMessages) => [...prevMessages, botMessage]);
+        } else {
+          // Split the message if it's long
+          const messageParts = splitMessage(botResponse);
+          const botMessages = messageParts.map(part => ({
+            text: part,
+            sender: "bot"
+          }));
+          
+          await addMessagesWithDelay(setMessages, botMessages, 1000);
         }
+      } else if (currentState === "ASK_EXERCISE" || currentState === "EXERCISE_SUGGESTION" || currentState === "EXERCISE_EXPLANATION") {
+        // Use ExerciseMessage component for exercise-related states
+        const botMessage = {
+          text: botResponse,
+          sender: "bot",
+          isExercise: true,
+          exerciseImage: null // No specific image for these states
+        };
+        setMessages((prevMessages) => [...prevMessages, botMessage]);
+      } else {
+        // Split the message if it's long
+        const messageParts = splitMessage(botResponse);
+        const botMessages = messageParts.map(part => ({
+          text: part,
+          sender: "bot"
+        }));
+        
+        await addMessagesWithDelay(setMessages, botMessages, 1000);
       }
       
-      setMessages((prevMessages) => [...prevMessages, botMessage]);
       setRecommendations(response.data.recommendations || []);
+      setCurrentState(response.data.state || "");
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -131,23 +163,53 @@ const ChatbotSimple = () => {
       );
       
       // Check if response contains exercise data
-      let botMessage = { text: response.data.response, sender: "bot" };
+      let botResponse = response.data.response;
+      const currentState = response.data.state || "";
       
       if (response.data.exercise_number && response.data.exercise_number > 0) {
         const exerciseImages = ExcImage();
         const exerciseImage = exerciseImages[response.data.exercise_number];
         if (exerciseImage && exerciseImage.src && exerciseImage.src[0]) {
-          botMessage = {
-            text: response.data.response,
+          // For exercise messages, don't split them
+          const botMessage = {
+            text: botResponse,
             sender: "bot",
             isExercise: true,
             exerciseImage: exerciseImage.src[0]
           };
+          setMessages((prevMessages) => [...prevMessages, botMessage]);
+        } else {
+          // Split the message if it's long
+          const messageParts = splitMessage(botResponse);
+          const botMessages = messageParts.map(part => ({
+            text: part,
+            sender: "bot"
+          }));
+          
+          await addMessagesWithDelay(setMessages, botMessages, 1000);
         }
+      } else if (currentState === "ASK_EXERCISE" || currentState === "EXERCISE_SUGGESTION" || currentState === "EXERCISE_EXPLANATION") {
+        // Use ExerciseMessage component for exercise-related states
+        const botMessage = {
+          text: botResponse,
+          sender: "bot",
+          isExercise: true,
+          exerciseImage: null // No specific image for these states
+        };
+        setMessages((prevMessages) => [...prevMessages, botMessage]);
+      } else {
+        // Split the message if it's long
+        const messageParts = splitMessage(botResponse);
+        const botMessages = messageParts.map(part => ({
+          text: part,
+          sender: "bot"
+        }));
+        
+        await addMessagesWithDelay(setMessages, botMessages, 1000);
       }
       
-      setMessages((prevMessages) => [...prevMessages, botMessage]);
       setRecommendations(response.data.recommendations || []);
+      setCurrentState(response.data.state || "");
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -161,10 +223,43 @@ const ChatbotSimple = () => {
     window.location.reload();
   };
 
-  const handleRestart = () => {
-    setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
-    setRecommendations(["سلام", "به کمک نیاز دارم"]);
-    setInput("");
+  const handleRestart = async () => {
+    try {
+      // Call the reset API endpoint
+      await axios.post(
+        "http://localhost:8000/api/reset-state/",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+      
+      // Reset local state
+      setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
+      setRecommendations(["سلام", "به کمک نیاز دارم"]);
+      setInput("");
+      setCurrentState("");
+      
+      // Show success message
+      messageApi.success("دوباره شروع کنیم");
+    } catch (error) {
+      console.error("Error resetting state:", error);
+      messageApi.error("خطا در ریست کردن چت");
+      
+      // Still reset local state even if API call fails
+      setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
+      setRecommendations(["سلام", "به کمک نیاز دارم"]);
+      setInput("");
+      setCurrentState("");
+    }
+  };
+
+  // Function to check if conversation is at end or thanks state
+  const shouldShowResetButton = () => {
+    // Show reset button when state is THANKS, END, FEEDBACK, or LIKE_ANOTHER_EXERCSISE
+    return currentState === "THANKS" || currentState === "END" || currentState === "FEEDBACK" || currentState === "LIKE_ANOTHER_EXERCSISE";
   };
 
   return (
@@ -175,7 +270,7 @@ const ChatbotSimple = () => {
           <HeaderComponent handleLogout={handleLogout} handleRestart={handleRestart} />
           <div
             ref={chatAreaRef}
-            className="flex-grow overflow-y-auto p-4 space-y-4 app-background"
+            className="flex-grow overflow-y-auto p-4 space-y-1 app-background"
           >
             {messages.map((msg, index) => (
               <MessageComponent
@@ -211,6 +306,17 @@ const ChatbotSimple = () => {
               </button>
             ))}
           </div>
+          {shouldShowResetButton() && (
+            <div className="flex justify-center py-2">
+              <button
+                onClick={handleRestart}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full shadow-md transition duration-200 flex items-center space-x-2"
+              >
+                <FiRefreshCw size={16} />
+                <span>شروع دوباره</span>
+              </button>
+            </div>
+          )}
           <div className="flex items-center px-4 py-3 bg- shadow-lg">
             <input
               type="text"
@@ -292,7 +398,7 @@ const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage
   return (
     <div
       className={clsx(
-        "flex w-full items-end space-x-2 my-2",
+        "flex w-full items-end space-x-2 my-0.5",
         isMe ? "justify-end" : "justify-start"
       )}
     >
