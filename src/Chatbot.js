@@ -3,12 +3,15 @@ import { FiSend, FiMic, FiStopCircle, FiRefreshCw } from "react-icons/fi";
 import { CiLogout } from "react-icons/ci";
 import { TbMessageChatbot, TbMessageChatbotFilled } from "react-icons/tb";
 import axios from "axios";
-import { message, Typography } from "antd";
+import { message, Typography, Collapse } from "antd";
+import { CaretDownOutlined } from "@ant-design/icons";
 import clsx from "clsx";
 import "./App.css";
 import ExerciseMessage from "./ExerciseMessage";
 import { ExcImage } from "./Images";
 import { splitMessage, addMessagesWithDelay } from "./utils/messageSplitter";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -386,23 +389,18 @@ const HeaderComponent = ({ handleLogout, handleRestart }) => {
   );
 };
 
-const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage }) => {
-  const { Paragraph } = Typography;
+const MessageComponent = ({ text, sender, name, image, explain }) => {
   const isMe = sender === "me";
-  
-  // If it's an exercise message, use the ExerciseMessage component
-  if (isExercise && exerciseImage) {
-    return <ExerciseMessage msg={text} img={exerciseImage} />;
-  }
-  
+
   return (
     <div
       className={clsx(
-        "flex w-full items-end space-x-2 my-0.5",
+        "flex w-full items-end space-x-2 my-2",
         isMe ? "justify-end" : "justify-start"
       )}
     >
       {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
+
       <div
         className={clsx(
           "max-w-xs sm:max-w-md",
@@ -415,6 +413,7 @@ const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage
             {name}
           </div>
         )}
+
         {image && (
           <img
             src={image.src}
@@ -422,20 +421,110 @@ const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage
             className="mt-2 rounded-lg max-w-full -48 object-contain"
           />
         )}
-        <Paragraph
+
+        <div
           className={clsx(
-            "rounded-2xl px-4 py-2 shadow-md text-lg break-words paragraph",
+            "rounded-2xl px-4 text-sm py-2 shadow-md text-lg break-words paragraph",
             isMe
               ? "bg-blue-500 text-white rounded-br-none"
               : "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
           )}
-          copyable={!isMe}
         >
-          {text}
-        </Paragraph>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ node, ...props }) => (
+                <p style={{ marginBottom: "0.5rem", whiteSpace: "pre-wrap" }} {...props} />
+              ),
+              li: ({ node, ...props }) => (
+                <li style={{ marginBottom: "0.3rem" }} {...props} />
+              )
+            }}
+          >
+            {text}
+          </ReactMarkdown>
+        </div>
+
+        {explain && <CollapsableExplainability text={explain} />}
       </div>
     </div>
   );
 };
+
+const CollapsableExplainability = ({ text }) => {
+  const items = [
+    {
+      key: "1",
+      label: (
+        <p className="text-sm paragraph">چرا این تمرین برای من مفید است؟</p>
+      ),
+      children: <p className="text-sm paragraph">{text}</p>,
+    },
+  ];
+  return (
+    <div className="w-1/3">
+      <Collapse
+        items={items}
+        bordered={false}
+        expandIcon={({ isActive }) => (
+          <CaretDownOutlined rotate={isActive ? 180 : 0} />
+        )}
+        className="bg-indigo-200 shadow-md"
+      />
+    </div>
+  );
+};
+
+// const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage }) => {
+//   const { Paragraph } = Typography;
+//   const isMe = sender === "me";
+  
+//   // If it's an exercise message, use the ExerciseMessage component
+//   if (isExercise && exerciseImage) {
+//     return <ExerciseMessage msg={text} img={exerciseImage} />;
+//   }
+  
+//   return (
+//     <div
+//       className={clsx(
+//         "flex w-full items-end space-x-2 my-0.5",
+//         isMe ? "justify-end" : "justify-start"
+//       )}
+//     >
+//       {!isMe && <TbMessageChatbot className="w-8 h-8 mb-8" />}
+//       <div
+//         className={clsx(
+//           "max-w-xs sm:max-w-md",
+//           isMe ? "text-right" : "text-left"
+//         )}
+//         dir="rtl"
+//       >
+//         {name && !isMe && (
+//           <div className="text-xs text-gray-500 font-medium mb-1 ml-1">
+//             {name}
+//           </div>
+//         )}
+//         {image && (
+//           <img
+//             src={image.src}
+//             alt={image.alt}
+//             className="mt-2 rounded-lg max-w-full -48 object-contain"
+//           />
+//         )}
+//         <Paragraph
+//           className={clsx(
+//             "rounded-2xl px-4 py-2 shadow-md text-lg break-words paragraph",
+//             isMe
+//               ? "bg-blue-500 text-white rounded-br-none"
+//               : "bg-slate-200 text-slate-800 rounded-r-2xl rounded-tl-2xl max-w-m px-4 py-2"
+//           )}
+//           copyable={!isMe}
+//         >
+//           {text}
+//         </Paragraph>
+//       </div>
+//     </div>
+//   );
+// };
 
 export default Chatbot;
