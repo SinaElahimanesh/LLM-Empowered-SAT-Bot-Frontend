@@ -27,6 +27,7 @@ const ChatbotSimple = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const messagesEndRef = useRef(null);
   const chatAreaRef = useRef(null);
+  const baseURL = process.env.REACT_APP_BASE_URL;
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -44,7 +45,7 @@ const ChatbotSimple = () => {
     setIsTyping(true);
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/simple-chat/",
+        `${baseURL}/api/simple-chat/`,
         { text },
         {
           headers: {
@@ -52,11 +53,11 @@ const ChatbotSimple = () => {
           },
         }
       );
-      
+
       // Check if response contains exercise data
       let botResponse = response.data.response;
       const currentState = response.data.state || "";
-      
+
       if (response.data.exercise_number && response.data.exercise_number > 0) {
         const exerciseImages = ExcImage();
         const exerciseImage = exerciseImages[response.data.exercise_number];
@@ -66,39 +67,43 @@ const ChatbotSimple = () => {
             text: botResponse,
             sender: "bot",
             isExercise: true,
-            exerciseImage: exerciseImage.src[0]
+            exerciseImage: exerciseImage.src[0],
           };
           setMessages((prevMessages) => [...prevMessages, botMessage]);
         } else {
           // Split the message if it's long
           const messageParts = splitMessage(botResponse);
-          const botMessages = messageParts.map(part => ({
+          const botMessages = messageParts.map((part) => ({
             text: part,
-            sender: "bot"
+            sender: "bot",
           }));
-          
+
           await addMessagesWithDelay(setMessages, botMessages, 1000);
         }
-      } else if (currentState === "ASK_EXERCISE" || currentState === "EXERCISE_SUGGESTION" || currentState === "EXERCISE_EXPLANATION") {
+      } else if (
+        currentState === "ASK_EXERCISE" ||
+        currentState === "EXERCISE_SUGGESTION" ||
+        currentState === "EXERCISE_EXPLANATION"
+      ) {
         // Use ExerciseMessage component for exercise-related states
         const botMessage = {
           text: botResponse,
           sender: "bot",
           isExercise: true,
-          exerciseImage: null // No specific image for these states
+          exerciseImage: null, // No specific image for these states
         };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
       } else {
         // Split the message if it's long
         const messageParts = splitMessage(botResponse);
-        const botMessages = messageParts.map(part => ({
+        const botMessages = messageParts.map((part) => ({
           text: part,
-          sender: "bot"
+          sender: "bot",
         }));
-        
+
         await addMessagesWithDelay(setMessages, botMessages, 1000);
       }
-      
+
       setRecommendations(response.data.recommendations || []);
       setCurrentState(response.data.state || "");
     } catch (error) {
@@ -150,9 +155,10 @@ const ChatbotSimple = () => {
   const sendAudioMessage = async (audioBlob) => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "voice_message.wav");
+
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/simple-chat/", // Assuming same endpoint for audio
+        `${baseURL}/api/simple-chat/`, // Assuming same endpoint for audio
         formData,
         {
           headers: {
@@ -161,11 +167,11 @@ const ChatbotSimple = () => {
           },
         }
       );
-      
+
       // Check if response contains exercise data
       let botResponse = response.data.response;
       const currentState = response.data.state || "";
-      
+
       if (response.data.exercise_number && response.data.exercise_number > 0) {
         const exerciseImages = ExcImage();
         const exerciseImage = exerciseImages[response.data.exercise_number];
@@ -175,39 +181,43 @@ const ChatbotSimple = () => {
             text: botResponse,
             sender: "bot",
             isExercise: true,
-            exerciseImage: exerciseImage.src[0]
+            exerciseImage: exerciseImage.src[0],
           };
           setMessages((prevMessages) => [...prevMessages, botMessage]);
         } else {
           // Split the message if it's long
           const messageParts = splitMessage(botResponse);
-          const botMessages = messageParts.map(part => ({
+          const botMessages = messageParts.map((part) => ({
             text: part,
-            sender: "bot"
+            sender: "bot",
           }));
-          
+
           await addMessagesWithDelay(setMessages, botMessages, 1000);
         }
-      } else if (currentState === "ASK_EXERCISE" || currentState === "EXERCISE_SUGGESTION" || currentState === "EXERCISE_EXPLANATION") {
+      } else if (
+        currentState === "ASK_EXERCISE" ||
+        currentState === "EXERCISE_SUGGESTION" ||
+        currentState === "EXERCISE_EXPLANATION"
+      ) {
         // Use ExerciseMessage component for exercise-related states
         const botMessage = {
           text: botResponse,
           sender: "bot",
           isExercise: true,
-          exerciseImage: null // No specific image for these states
+          exerciseImage: null, // No specific image for these states
         };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
       } else {
         // Split the message if it's long
         const messageParts = splitMessage(botResponse);
-        const botMessages = messageParts.map(part => ({
+        const botMessages = messageParts.map((part) => ({
           text: part,
-          sender: "bot"
+          sender: "bot",
         }));
-        
+
         await addMessagesWithDelay(setMessages, botMessages, 1000);
       }
-      
+
       setRecommendations(response.data.recommendations || []);
       setCurrentState(response.data.state || "");
     } catch (error) {
@@ -227,7 +237,7 @@ const ChatbotSimple = () => {
     try {
       // Call the reset API endpoint
       await axios.post(
-        "http://localhost:8000/api/reset-state/",
+        `${baseURL}/api/reset-state/`,
         {},
         {
           headers: {
@@ -235,19 +245,19 @@ const ChatbotSimple = () => {
           },
         }
       );
-      
+
       // Reset local state
       setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
       setRecommendations(["سلام", "به کمک نیاز دارم"]);
       setInput("");
       setCurrentState("");
-      
+
       // Show success message
       messageApi.success("دوباره شروع کنیم");
     } catch (error) {
       console.error("Error resetting state:", error);
       messageApi.error("خطا در ریست کردن چت");
-      
+
       // Still reset local state even if API call fails
       setMessages([{ text: "سلام! خوشحالم میبینمت.", sender: "bot" }]);
       setRecommendations(["سلام", "به کمک نیاز دارم"]);
@@ -259,7 +269,12 @@ const ChatbotSimple = () => {
   // Function to check if conversation is at end or thanks state
   const shouldShowResetButton = () => {
     // Show reset button when state is THANKS, END, FEEDBACK, or LIKE_ANOTHER_EXERCSISE
-    return currentState === "THANKS" || currentState === "END" || currentState === "FEEDBACK" || currentState === "LIKE_ANOTHER_EXERCSISE";
+    return (
+      currentState === "THANKS" ||
+      currentState === "END" ||
+      currentState === "FEEDBACK" ||
+      currentState === "LIKE_ANOTHER_EXERCSISE"
+    );
   };
 
   return (
@@ -267,7 +282,10 @@ const ChatbotSimple = () => {
       {contextHolder}
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-blue-50">
         <div className="flex flex-col w-full max-w-3xl h-full bg-grey-50 shadow-2xl rounded-lg overflow-hidden">
-          <HeaderComponent handleLogout={handleLogout} handleRestart={handleRestart} />
+          <HeaderComponent
+            handleLogout={handleLogout}
+            handleRestart={handleRestart}
+          />
           <div
             ref={chatAreaRef}
             className="flex-grow overflow-y-auto p-4 space-y-1 app-background"
@@ -386,15 +404,22 @@ const HeaderComponent = ({ handleLogout, handleRestart }) => {
   );
 };
 
-const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage }) => {
+const MessageComponent = ({
+  text,
+  sender,
+  name,
+  image,
+  isExercise,
+  exerciseImage,
+}) => {
   const { Paragraph } = Typography;
   const isMe = sender === "me";
-  
+
   // If it's an exercise message, use the ExerciseMessage component
   if (isExercise && exerciseImage) {
     return <ExerciseMessage msg={text} img={exerciseImage} />;
   }
-  
+
   return (
     <div
       className={clsx(
@@ -438,4 +463,4 @@ const MessageComponent = ({ text, sender, name, image, isExercise, exerciseImage
   );
 };
 
-export default ChatbotSimple; 
+export default ChatbotSimple;
