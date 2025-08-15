@@ -26,19 +26,11 @@ const Register = ({ onRegister }) => {
       );
       messageApi.open({
         type: "success",
-        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. در حال انتقال ...`,
+        content: `ثبت‌نام کاربر موفقیت‌آمیز بود. لطفا وارد شوید.`,
       });
       
-      if (onRegister) {
-        onRegister();
-      }
-      
-      // Redirect based on group
-      if (response.data.group === "intervention") {
-        navigate("/alpha");
-      } else {
-        navigate("/beta");
-      }
+      // Redirect to login page after successful registration
+      navigate("/login");
     } catch (error) {
       console.log("reg err: ", error);
       messageApi.open({
