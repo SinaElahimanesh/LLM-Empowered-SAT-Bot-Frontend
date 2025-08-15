@@ -275,9 +275,7 @@ const Chatbot = () => {
     // Show reset button when state is THANKS, END, FEEDBACK, or LIKE_ANOTHER_EXERCSISE
     return (
       currentState === "THANKS" ||
-      currentState === "END" ||
-      currentState === "FEEDBACK" ||
-      currentState === "LIKE_ANOTHER_EXERCSISE"
+      currentState === "END"
     );
   };
 
