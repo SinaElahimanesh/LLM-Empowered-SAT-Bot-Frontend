@@ -125,6 +125,8 @@ const ChatbotSimple = () => {
           { text: "Error: Unable to fetch response.", sender: "bot" },
         ]);
       }
+    } finally {
+      setIsTyping(false)
     }
   }
 
