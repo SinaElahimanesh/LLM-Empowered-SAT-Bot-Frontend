@@ -315,7 +315,7 @@ const Chatbot = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-2 px-4 py-2">
+          {/* <div className="flex flex-wrap gap-2 px-4 py-2">
             {recommendations.map((rec, idx) => (
               <button
                 key={idx}
@@ -325,7 +325,7 @@ const Chatbot = () => {
                 {rec}
               </button>
             ))}
-          </div>
+          </div> */}
           {shouldShowResetButton() && (
             <div className="flex justify-center py-2">
               <button
