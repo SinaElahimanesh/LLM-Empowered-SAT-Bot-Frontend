@@ -107,14 +107,36 @@ const ChatbotSimple = () => {
       setRecommendations(response.data.recommendations || []);
       setCurrentState(response.data.state || "");
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        { text: "Error: Unable to fetch response.", sender: "bot" },
-      ]);
-    } finally {
-      setIsTyping(false);
+      if (
+        error.response &&
+        (error.response.status === 401 || error.response.data?.detail === "Invalid token")
+      ) {
+        localStorage.clear();
+        sessionStorage.clear();
+        setMessages((prev) => [
+          ...prev,
+          { text: "Session expired. Please log in again.", sender: "bot" },
+        ]);
+        // optional: redirect
+        // window.location.href = "/login";
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { text: "Error: Unable to fetch response.", sender: "bot" },
+        ]);
+      }
     }
-  };
+  }
+
+  //   catch (error) {
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       { text: "Error: Unable to fetch response.", sender: "bot" },
+  //     ]);
+  //   } finally {
+  //     setIsTyping(false);
+  //   }
+  // };
 
   const startRecording = async () => {
     try {
@@ -311,7 +333,7 @@ const ChatbotSimple = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-2 px-4 py-2">
+          {/* <div className="flex flex-wrap gap-2 px-4 py-2">
             {recommendations.map((rec, idx) => (
               <button
                 key={idx}
@@ -321,7 +343,8 @@ const ChatbotSimple = () => {
                 {rec}
               </button>
             ))}
-          </div>
+          </div> */}
+
           {shouldShowResetButton() && (
             <div className="flex justify-center py-2">
               <button
