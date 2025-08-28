@@ -121,6 +121,10 @@ const checkAuth = () => {
   return !!localStorage.getItem("access");
 };
 
+const getUserGroup = () => {
+  return localStorage.getItem("userGroup") || "";
+};
+
 const PrivateRoute = ({ children }) => {
   return checkAuth() ? children : <Navigate to="/login" replace />;
 };
@@ -166,16 +170,34 @@ function App() {
         <Routes>
           {isAuthenticated ? (
             <>
-              <Route path="/alpha" element={<Chatbot />} />
-              <Route path="/beta" element={<ChatbotSimple />} />
-              {/* Removed wildcard redirect to /alpha */}
+              <Route path="/alpha" element={
+                getUserGroup().toLowerCase().trim() === "intervention" 
+                  ? <Chatbot /> 
+                  : <Navigate to="/beta" replace />
+              } />
+              <Route path="/beta" element={
+                getUserGroup().toLowerCase().trim() === "intervention" 
+                  ? <Navigate to="/alpha" replace />
+                  : <ChatbotSimple />
+              } />
+              <Route path="/" element={
+                getUserGroup().toLowerCase().trim() === "intervention" 
+                  ? <Navigate to="/alpha" replace /> 
+                  : <Navigate to="/beta" replace />
+              } />
+              <Route path="*" element={
+                getUserGroup().toLowerCase().trim() === "intervention" 
+                  ? <Navigate to="/alpha" replace /> 
+                  : <Navigate to="/beta" replace />
+              } />
             </>
           ) : (
             <>
+              <Route path="/" element={<Login onLogin={() => setIsAuthenticated(true)} />} />
               <Route path="/register" element={<Register onRegister={() => setIsAuthenticated(true)} />} />
               <Route path="/login" element={<Login onLogin={() => setIsAuthenticated(true)} />} />
               {/* <Route path="/audio" element={<AudioRecorder />} /> */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}
         </Routes>

@@ -21,6 +21,7 @@ const Login = ({ onLogin }) => {
 
       localStorage.setItem("access", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
+      localStorage.setItem("userGroup", response.data.group || "");
       onLogin();
       // Debug logs
       console.log("response", response.data);
@@ -31,7 +32,7 @@ const Login = ({ onLogin }) => {
         navigate("/alpha");
       } else {
         navigate("/beta");
-      }
+      } 
     } catch (err) {
       console.error(err);
       messageApi.open({
