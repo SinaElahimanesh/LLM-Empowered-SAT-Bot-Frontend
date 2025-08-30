@@ -27,12 +27,17 @@ const Login = ({ onLogin }) => {
       console.log("response", response.data);
       const group = (response.data.group || "").toLowerCase().trim();
       console.log("group value:", group);
-      // Robust redirect
+      // Robust redirect based on group
       if (group === "intervention") {
         navigate("/alpha");
-      } else {
+      } else if (group === "control") {
         navigate("/beta");
-      } 
+      } else if (group === "placebo") {
+        navigate("/gamma");
+      } else {
+        // Fallback to alpha if group is unknown
+        navigate("/alpha");
+      }
     } catch (err) {
       console.error(err);
       messageApi.open({

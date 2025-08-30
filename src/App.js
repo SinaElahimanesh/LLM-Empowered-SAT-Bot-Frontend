@@ -114,8 +114,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Chatbot from "./Chatbot";
 import Login from "./Auth/Login";
 import Register from "./Auth/Register";
-import AudioRecorder from "./AudioRecorder";
 import ChatbotSimple from "./ChatbotSimple";
+import ChatbotPlacebo from "./ChatbotPlacebo";
 
 const checkAuth = () => {
   return !!localStorage.getItem("access");
@@ -125,9 +125,21 @@ const getUserGroup = () => {
   return localStorage.getItem("userGroup") || "";
 };
 
-const PrivateRoute = ({ children }) => {
-  return checkAuth() ? children : <Navigate to="/login" replace />;
+const getRouteByGroup = (group) => {
+  const normalizedGroup = group.toLowerCase().trim();
+  switch (normalizedGroup) {
+    case "intervention":
+      return "/alpha";
+    case "control":
+      return "/beta";
+    case "placebo":
+      return "/gamma";
+    default:
+      return "/alpha"; // fallback
+  }
 };
+
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(checkAuth());
@@ -171,25 +183,22 @@ function App() {
           {isAuthenticated ? (
             <>
               <Route path="/alpha" element={
-                getUserGroup().toLowerCase().trim() === "intervention" 
-                  ? <Chatbot /> 
-                  : <Navigate to="/beta" replace />
+                getUserGroup().toLowerCase().trim() === "intervention"
+                  ? <Chatbot />
+                  : <Navigate to={getRouteByGroup(getUserGroup())} replace />
               } />
               <Route path="/beta" element={
-                getUserGroup().toLowerCase().trim() === "intervention" 
-                  ? <Navigate to="/alpha" replace />
-                  : <ChatbotSimple />
+                getUserGroup().toLowerCase().trim() === "control"
+                  ? <ChatbotSimple />
+                  : <Navigate to={getRouteByGroup(getUserGroup())} replace />
               } />
-              <Route path="/" element={
-                getUserGroup().toLowerCase().trim() === "intervention" 
-                  ? <Navigate to="/alpha" replace /> 
-                  : <Navigate to="/beta" replace />
+              <Route path="/gamma" element={
+                getUserGroup().toLowerCase().trim() === "placebo"
+                  ? <ChatbotPlacebo />
+                  : <Navigate to={getRouteByGroup(getUserGroup())} replace />
               } />
-              <Route path="*" element={
-                getUserGroup().toLowerCase().trim() === "intervention" 
-                  ? <Navigate to="/alpha" replace /> 
-                  : <Navigate to="/beta" replace />
-              } />
+              <Route path="/" element={<Navigate to={getRouteByGroup(getUserGroup())} replace />} />
+              <Route path="*" element={<Navigate to={getRouteByGroup(getUserGroup())} replace />} />
             </>
           ) : (
             <>

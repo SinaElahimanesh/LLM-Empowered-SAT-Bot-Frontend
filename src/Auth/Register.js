@@ -24,11 +24,17 @@ const Register = ({ onRegister }) => {
         `${baseURL}/api/register/`,
         formData
       );
+
+      // Store the user group from registration response if provided
+      if (response.data.group) {
+        localStorage.setItem("userGroup", response.data.group);
+      }
+
       messageApi.open({
         type: "success",
         content: `ثبت‌نام کاربر موفقیت‌آمیز بود. لطفا وارد شوید.`,
       });
-      
+
       // Redirect to login page after successful registration
       navigate("/login");
     } catch (error) {
