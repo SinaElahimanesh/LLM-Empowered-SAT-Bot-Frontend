@@ -258,12 +258,14 @@ const ChatbotPlacebo = () => {
                                 </div>
                             </div>
                         )}
+                        {/* Voice mic button hidden per request
                         <button
                             onClick={recording ? stopRecording : startRecording}
                             className="ml-2 p-3 rounded-full bg-red-500 text-white"
                         >
                             {recording ? <FiStopCircle size={20} /> : <FiMic size={20} />}
                         </button>
+                        */}
                         <button
                             onClick={sendMessage}
                             className="ml-2 p-3 rounded-full bg-blue-500 text-white"
