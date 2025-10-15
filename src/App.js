@@ -124,18 +124,23 @@ const checkAuth = () => {
 const getUserGroup = () => {
   return localStorage.getItem("userGroup") || "";
 };
+export const studyGroup = {
+  "alpha": "/A1x",
+  "beta": "/A1y",
+  "gamma": "/A1z"
+}
 
 const getRouteByGroup = (group) => {
   const normalizedGroup = group.toLowerCase().trim();
   switch (normalizedGroup) {
     case "intervention":
-      return "/alpha";
+      return studyGroup["alpha"];
     case "control":
-      return "/beta";
+      return studyGroup["beta"];
     case "placebo":
-      return "/gamma";
+      return studyGroup["gamma"];
     default:
-      return "/alpha"; // fallback
+      return studyGroup["alpha"]; // fallback
   }
 };
 
@@ -182,17 +187,17 @@ function App() {
         <Routes>
           {isAuthenticated ? (
             <>
-              <Route path="/alpha" element={
+              <Route path={studyGroup["alpha"]} element={
                 getUserGroup().toLowerCase().trim() === "intervention"
                   ? <Chatbot />
                   : <Navigate to={getRouteByGroup(getUserGroup())} replace />
               } />
-              <Route path="/beta" element={
+              <Route path={studyGroup["beta"]} element={
                 getUserGroup().toLowerCase().trim() === "control"
                   ? <ChatbotSimple />
                   : <Navigate to={getRouteByGroup(getUserGroup())} replace />
               } />
-              <Route path="/gamma" element={
+              <Route path={studyGroup["gamma"]} element={
                 getUserGroup().toLowerCase().trim() === "placebo"
                   ? <ChatbotPlacebo />
                   : <Navigate to={getRouteByGroup(getUserGroup())} replace />

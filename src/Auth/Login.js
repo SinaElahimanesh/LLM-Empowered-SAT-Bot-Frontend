@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
+import { studyGroup } from "../App"; 
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -29,14 +30,14 @@ const Login = ({ onLogin }) => {
       console.log("group value:", group);
       // Robust redirect based on group
       if (group === "intervention") {
-        navigate("/alpha");
+        navigate(studyGroup["alpha"]);
       } else if (group === "control") {
-        navigate("/beta");
+        navigate(studyGroup["beta"]);
       } else if (group === "placebo") {
-        navigate("/gamma");
+        navigate(studyGroup["gamma"]);
       } else {
         // Fallback to alpha if group is unknown
-        navigate("/alpha");
+        navigate(studyGroup["alpha"]);
       }
     } catch (err) {
       console.error(err);
